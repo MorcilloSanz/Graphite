@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <vector>
+#include <map>
 #include <memory>
 #include <cstdint>
 
@@ -21,6 +22,10 @@ class FrameBuffer;
 class VertexBuffer;
 class IndexBuffer;
 
+//------------------//
+//  BufferRegister  //
+//------------------//
+
 class BufferRegister {
 protected:
     std::vector<Ptr<FrameBuffer>> fbos;
@@ -36,6 +41,13 @@ protected:
     }
 public:
     ~BufferRegister() = default;
+
+    BufferRegister(const BufferRegister& bufferRegister) = delete;
+    BufferRegister(BufferRegister&& bufferRegister) noexcept = delete;
+
+    BufferRegister& operator=(const BufferRegister& bufferRegister) = delete;
+    BufferRegister& operator=(BufferRegister&& bufferRegister) noexcept = delete;
+
     static BufferRegister* getInstance();
     static void destroyInstance();
 public:
@@ -60,6 +72,10 @@ public:
     inline void bindIbo(int iboID) { this->iboID = iboID; }
 };
 
+//-------------//
+//   Buffer    //
+//-------------//
+
 class Buffer {
 protected:
     void* buffer;
@@ -82,7 +98,12 @@ public:
 public:
     inline void* getBuffer() const { return buffer; }
     inline unsigned int getID() const { return id; }
+    inline size_t getSize() const { return size; }
 };
+
+//-----------------//
+//   FrameBuffer   //
+//-----------------//
 
 class FrameBuffer : public Buffer {
 private:
@@ -104,14 +125,45 @@ public:
 public:
    void bind() override;
    void unbind() override;
-
-   void draw();
 public:
     inline unsigned int getWidth() const { return width; }
     inline unsigned int getHeight() const { return height; }
-
-    inline size_t size() const { return width * height * 3; }
 };
+
+//------------------//
+//   VertexBuffer   //
+//------------------//
+
+class VertexBuffer : public Buffer {
+public:
+    using Attribute = std::pair<unsigned int, unsigned int>;
+    using Attributes = std::map<unsigned int, unsigned int>;
+private:
+    Attributes attributes;
+public:
+    VertexBuffer(unsigned int id, float* data, size_t size, const Attributes& _attr);
+    VertexBuffer() = default;
+
+    ~VertexBuffer() = default;
+
+    VertexBuffer(const VertexBuffer& vertexBuffer);
+    VertexBuffer(VertexBuffer&& vertexBuffer) noexcept;
+
+    VertexBuffer& operator=(const VertexBuffer& vertexBuffer);
+    VertexBuffer& operator=(VertexBuffer&& vertexBuffer) noexcept;
+public:
+    static Ptr<VertexBuffer> New(float* data, size_t size, const Attributes& attributes);
+public:
+    void bind() override;
+    void unbind() override;
+public:
+    inline size_t getSize() const { return size; }
+    inline const Attributes& getAttributes() { return attributes; }
+};
+
+//------------//
+//    CUDA    //
+//------------//
 
 void check_cuda_error(const char* message);
 

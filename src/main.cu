@@ -15,20 +15,44 @@ using namespace ghp;
 
 int main() {
 
-    // Graphite
-    ghp::initGraphite();
+    size_t freeMem, totalMem;
+    cudaMemGetInfo(&freeMem, &totalMem);
+    std::cout << "Free Memory (GPU): " << freeMem / (1024 * 1024) << " MB" << std::endl;
+    std::cout << "Total Memory (GPU): " << totalMem / (1024 * 1024) << " MB" << std::endl;
 
+    // Graphite
+    initGraphite();
+
+    // Frame buffer
     constexpr unsigned int width = 500;
     constexpr unsigned int height = 500;
 
-    ghp::Ptr<FrameBuffer> frameBuffer = ghp::FrameBuffer::New(width, height);
+    size_t framebufferMem = sizeof(uint8_t) * width * height * 3;
+    std::cout << "Frame Buffer Mem (GPU): " << static_cast<float>(framebufferMem) / (1024 * 1024) << "MB" << std::endl;
+
+    Ptr<FrameBuffer> frameBuffer = FrameBuffer::New(width, height);
     frameBuffer->bind();
 
-    ghp::draw();
+    // Vertex Buffer
+    float data[18] = {
+         0.0f,  0.5f, 1.0f,  1.0f, 0.0f, 0.0f,
+         0.5f, -0.5f, 1.0f,  0.0f, 1.0f, 0.0f,
+        -0.5f, -0.5f, 1.0f,  0.0f, 0.0f, 1.0f
+    };
+
+    VertexBuffer::Attributes attributes;
+    attributes.insert(VertexBuffer::Attribute(0, 3)); // (0) Position: x, y, z
+    attributes.insert(VertexBuffer::Attribute(1, 3)); // (1) Color: r, g, b
+    
+    Ptr<VertexBuffer> vertexBuffer = VertexBuffer::New(data, sizeof(data), attributes);
+    vertexBuffer->bind();
+
+    // Draw call
+    draw();
 
     // CPU
-    uint8_t* bufferCPU = new uint8_t[frameBuffer->size()];
-    cudaMemcpy(bufferCPU, frameBuffer->getBuffer(), frameBuffer->size(), cudaMemcpyDeviceToHost);
+    uint8_t* bufferCPU = new uint8_t[frameBuffer->getSize()];
+    cudaMemcpy(bufferCPU, frameBuffer->getBuffer(), frameBuffer->getSize(), cudaMemcpyDeviceToHost);
     
     stbi_write_png("output.png", width, height, STBI_rgb, bufferCPU, width * STBI_rgb);
     

@@ -22,8 +22,18 @@ void draw() {
     BufferRegister* bufferRegister = BufferRegister::getInstance();
 
     if(bufferRegister->getBindedFrameBufferID() > 0) {
+
         Ptr<FrameBuffer> bindedFrameBuffer = bufferRegister->getBindedFrameBuffer();
-        bindedFrameBuffer->draw();
+        
+        const unsigned int width = bindedFrameBuffer->getWidth();
+        const unsigned int height = bindedFrameBuffer->getHeight();
+
+        dim3 threadsPerBlock(16, 16);
+        dim3 blocksPerGrid((width + threadsPerBlock.x - 1) / threadsPerBlock.x,
+                        (height + threadsPerBlock.y - 1) / threadsPerBlock.y);
+
+        kernel<<<blocksPerGrid, threadsPerBlock>>>((uint8_t*)bindedFrameBuffer->getBuffer(), width, height);
+        cudaDeviceSynchronize();
     }
 }
 
@@ -127,7 +137,7 @@ Buffer& Buffer::operator=(Buffer&& buff) noexcept {
 //-----------------//
 
 FrameBuffer::FrameBuffer(unsigned int id, unsigned int _width, unsigned int _height)
-    : Buffer(id, size()), width(_width), height(_height) {
+    : Buffer(id, 1 * width * height * 3), width(_width), height(_height) {
 }
 
 FrameBuffer::FrameBuffer(unsigned int _width, unsigned int _height)
@@ -171,7 +181,7 @@ FrameBuffer& FrameBuffer::operator=(FrameBuffer&& frameBuffer) noexcept {
         frameBuffer.width = 0;
         frameBuffer.height = 0;
     }
-    
+
     return *this;
 }
 
@@ -196,13 +206,64 @@ void FrameBuffer::unbind() {
     bufferRegister->bindFbo(0);
 }
 
-void FrameBuffer::draw() {
-    dim3 threadsPerBlock(16, 16);
-    dim3 blocksPerGrid((width + threadsPerBlock.x - 1) / threadsPerBlock.x,
-                    (height + threadsPerBlock.y - 1) / threadsPerBlock.y);
+//------------------//
+//   VertexBuffer   //
+//------------------//
 
-    kernel<<<blocksPerGrid, threadsPerBlock>>>((uint8_t*)buffer, width, height);
-    cudaDeviceSynchronize();
+VertexBuffer::VertexBuffer(unsigned int id, float* data, size_t size, const Attributes& _attr) 
+    : Buffer(id, size), attributes(_attr) {
+    cudaMemcpy(buffer, data, size, cudaMemcpyHostToDevice);
+    check_cuda_error("VertexBuffer::VertexBuffer cudaMemcpy");
+}
+
+VertexBuffer::VertexBuffer(const VertexBuffer& vertexBuffer) 
+    : Buffer(vertexBuffer), attributes(vertexBuffer.attributes) {
+}
+
+VertexBuffer::VertexBuffer(VertexBuffer&& vertexBuffer) noexcept 
+    : Buffer(std::move(vertexBuffer)), attributes(std::move(vertexBuffer.attributes)) {
+    vertexBuffer.attributes = {};
+}
+
+VertexBuffer& VertexBuffer::operator=(const VertexBuffer& vertexBuffer) {
+
+    if(this != &vertexBuffer) {
+        Buffer::operator=(vertexBuffer);
+        attributes = vertexBuffer.attributes;
+    }
+
+    return *this;
+}
+
+VertexBuffer& VertexBuffer::operator=(VertexBuffer&& vertexBuffer) noexcept {
+
+    if(this != &vertexBuffer) {
+        Buffer::operator=(std::move(vertexBuffer));
+        attributes = std::move(vertexBuffer.attributes);
+    }
+
+    return *this;
+}
+
+Ptr<VertexBuffer> VertexBuffer::New(float* data, size_t size, const Attributes& attributes) {
+
+    BufferRegister* bufferRegister = BufferRegister::getInstance();
+
+    int id = bufferRegister->getVertexBuffers().size() + 1;
+    Ptr<VertexBuffer> vertexBuffer = std::make_shared<VertexBuffer>(id, data, size, attributes);
+    bufferRegister->addVertexBuffer(vertexBuffer);
+
+    return vertexBuffer;
+}
+
+void VertexBuffer::bind() {
+    BufferRegister* bufferRegister = BufferRegister::getInstance();
+    bufferRegister->bindVbo(id);
+}
+
+void VertexBuffer::unbind() {
+    BufferRegister* bufferRegister = BufferRegister::getInstance();
+    bufferRegister->bindVbo(0);
 }
 
 //------------//
