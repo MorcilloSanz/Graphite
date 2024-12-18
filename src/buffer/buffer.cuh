@@ -61,21 +61,44 @@ public:
 };
 
 class Buffer {
+protected:
+    void* buffer;
+    unsigned int id;
+    size_t size;
+public:
+    Buffer(unsigned int _id, size_t _size);
+    Buffer() = default;
+
+    virtual ~Buffer();
+    
+    Buffer(const Buffer& buff);
+    Buffer(Buffer&& buff) noexcept;
+
+    Buffer& operator=(const Buffer& buff);
+    Buffer& operator=(Buffer&& buff) noexcept;
 public:
     virtual void bind() = 0;
     virtual void unbind() = 0;
+public:
+    inline void* getBuffer() const { return buffer; }
+    inline unsigned int getID() const { return id; }
 };
 
 class FrameBuffer : public Buffer {
 private:
-    int id;
-    uint8_t* buffer;
     unsigned int width, height;
 public:
-    FrameBuffer(int _id, unsigned int _width, unsigned int _height);
+    FrameBuffer(unsigned int id, unsigned int _width, unsigned int _height);
     FrameBuffer(unsigned int _width, unsigned int _height);
-    ~FrameBuffer();
     FrameBuffer() = default;
+
+    ~FrameBuffer() = default;
+    
+    FrameBuffer(const FrameBuffer& frameBuffer);
+    FrameBuffer(FrameBuffer&& frameBuffer) noexcept;
+
+    FrameBuffer& operator=(const FrameBuffer& frameBuffer);
+    FrameBuffer& operator=(FrameBuffer&& frameBuffer) noexcept;
 public:
     static Ptr<FrameBuffer> New(unsigned int width, unsigned int height);
 public:
@@ -84,9 +107,6 @@ public:
 
    void draw();
 public:
-    inline int getID() const { return id; }
-    inline uint8_t* getBuffer() { return buffer; }
-    
     inline unsigned int getWidth() const { return width; }
     inline unsigned int getHeight() const { return height; }
 
