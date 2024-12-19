@@ -157,8 +157,30 @@ public:
     void bind() override;
     void unbind() override;
 public:
-    inline size_t getSize() const { return size; }
     inline const Attributes& getAttributes() { return attributes; }
+};
+
+//-----------------//
+//   IndexBuffer   //
+//-----------------//
+
+class IndexBuffer : public Buffer {
+public:
+    IndexBuffer(unsigned int id, unsigned int* indices, size_t size);
+    IndexBuffer() = default;
+
+    ~IndexBuffer() = default;
+
+    IndexBuffer(const IndexBuffer& indexBuffer);
+    IndexBuffer(IndexBuffer&& indexBuffer) noexcept;
+
+    IndexBuffer& operator=(const IndexBuffer& indexBuffer);
+    IndexBuffer& operator=(IndexBuffer&& indexBuffer) noexcept;
+public:
+    static Ptr<IndexBuffer> New(unsigned int* indices, size_t size);
+public:
+    void bind() override;
+    void unbind() override;
 };
 
 //------------//

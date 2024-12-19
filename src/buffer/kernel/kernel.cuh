@@ -1,5 +1,9 @@
 #pragma once
 
+struct KernelParams {
+    
+};
+
 __global__ void kernel(uint8_t* buffer, unsigned int width, unsigned int height) {
 
     int x = blockIdx.x * blockDim.x + threadIdx.x;

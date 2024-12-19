@@ -1,6 +1,6 @@
 #include "buffer.cuh"
 
-#include <kernel/kernel.cuh>
+#include "kernel/kernel.cuh"
 
 namespace ghp
 {
@@ -264,6 +264,63 @@ void VertexBuffer::bind() {
 void VertexBuffer::unbind() {
     BufferRegister* bufferRegister = BufferRegister::getInstance();
     bufferRegister->bindVbo(0);
+}
+
+//-----------------//
+//   IndexBuffer   //
+//-----------------//
+
+IndexBuffer::IndexBuffer(unsigned int id, unsigned int* indices, size_t size) 
+    : Buffer(id, size) {
+    cudaMemcpy(buffer, indices, size, cudaMemcpyHostToDevice);
+    check_cuda_error("IndexBuffer::IndexBuffer cudaMemcpy");
+}
+
+IndexBuffer::IndexBuffer(const IndexBuffer& indexBuffer) 
+    : Buffer(indexBuffer) {
+}
+
+IndexBuffer::IndexBuffer(IndexBuffer&& indexBuffer) noexcept 
+    : Buffer(std::move(indexBuffer)) {
+}
+
+IndexBuffer& IndexBuffer::operator=(const IndexBuffer& indexBuffer) {
+
+    if(this != &indexBuffer) {
+        Buffer::operator=(indexBuffer);
+    }
+
+    return *this;
+}
+
+IndexBuffer& IndexBuffer::operator=(IndexBuffer&& indexBuffer) noexcept {
+
+    if(this != &indexBuffer) {
+        Buffer::operator=(std::move(indexBuffer));
+    }
+
+    return *this;
+}
+
+Ptr<IndexBuffer> IndexBuffer::New(unsigned int* indices, size_t size) {
+
+    BufferRegister* bufferRegister = BufferRegister::getInstance();
+
+    int id = bufferRegister->getIndexBuffers().size() + 1;
+    Ptr<IndexBuffer> indexBuffer = std::make_shared<IndexBuffer>(id, indices, size);
+    bufferRegister->addIndexBuffer(indexBuffer);
+
+    return indexBuffer;
+}
+
+void IndexBuffer::bind() {
+    BufferRegister* bufferRegister = BufferRegister::getInstance();
+    bufferRegister->bindIbo(id);
+}
+
+void IndexBuffer::unbind() {
+    BufferRegister* bufferRegister = BufferRegister::getInstance();
+    bufferRegister->bindIbo(0);
 }
 
 //------------//

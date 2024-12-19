@@ -47,6 +47,10 @@ int main() {
     Ptr<VertexBuffer> vertexBuffer = VertexBuffer::New(data, sizeof(data), attributes);
     vertexBuffer->bind();
 
+    unsigned int indices[3] = { 0, 1, 2 };
+    Ptr<IndexBuffer> indexBuffer = IndexBuffer::New(indices, sizeof(indices));
+    indexBuffer->bind();
+
     // Draw call
     draw();
 
