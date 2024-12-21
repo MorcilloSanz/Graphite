@@ -20,19 +20,31 @@ void destroyGraphite() {
 void draw() {
 
     BufferRegister* bufferRegister = BufferRegister::getInstance();
-
     if(bufferRegister->getBindedFrameBufferID() > 0) {
 
+        // FrameBuffer
         Ptr<FrameBuffer> bindedFrameBuffer = bufferRegister->getBindedFrameBuffer();
+        uint8_t* frameBuffer = (uint8_t*)bindedFrameBuffer->getBuffer();
         
         const unsigned int width = bindedFrameBuffer->getWidth();
         const unsigned int height = bindedFrameBuffer->getHeight();
 
+        // Vertex Buffer
+        float* vertexBuffer = nullptr;
+        if(bufferRegister->getBindedVertexBufferID() > 0)
+            vertexBuffer = (float*)bufferRegister->getBindedVertexBuffer()->getBuffer();
+
+        // Index Buffer
+        unsigned int* indexBuffer = nullptr;
+        if(bufferRegister->getBindedIndexBufferID() > 0)
+            indexBuffer = (unsigned int*)bufferRegister->getBindedIndexBuffer()->getBuffer();
+
+        // Draw kernel
         dim3 threadsPerBlock(16, 16);
         dim3 blocksPerGrid((width + threadsPerBlock.x - 1) / threadsPerBlock.x,
                         (height + threadsPerBlock.y - 1) / threadsPerBlock.y);
 
-        kernel<<<blocksPerGrid, threadsPerBlock>>>((uint8_t*)bindedFrameBuffer->getBuffer(), width, height);
+        kernel<<<blocksPerGrid, threadsPerBlock>>>(frameBuffer, vertexBuffer, indexBuffer, width, height);
         cudaDeviceSynchronize();
     }
 }
