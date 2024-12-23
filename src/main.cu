@@ -12,10 +12,9 @@
 #include "buffer/buffer.cuh"
 #include "math/linalg.cuh"
 
-using namespace ghp;
+using namespace gph;
 
 int main() {
-
 
 
     mat4<float> matrix(1.0f);
@@ -77,7 +76,7 @@ int main() {
     delete[] bufferCPU;
 
     // Destroy
-    ghp::destroyGraphite();
+    destroyGraphite();
 
     return 0;
 }

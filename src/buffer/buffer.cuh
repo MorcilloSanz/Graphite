@@ -8,7 +8,7 @@
 
 #include <cuda_runtime.h>
 
-namespace ghp
+namespace gph
 {
 
 template <typename T>

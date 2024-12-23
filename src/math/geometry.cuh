@@ -2,9 +2,9 @@
 
 #include "linalg.cuh"
 
-namespace ghp
+namespace gph
 {
-    
+
 template <typename T>
 struct Ray {
 

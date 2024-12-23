@@ -9,7 +9,7 @@
  * 5) Pass the BVH as a parameter to the kernel
  */
 
-namespace ghp 
+namespace gph 
 {
 
 __device__ void setPixel(uint8_t* frameBuffer, int x, int y, unsigned int width, 

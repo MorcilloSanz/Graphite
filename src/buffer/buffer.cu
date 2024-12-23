@@ -2,7 +2,7 @@
 
 #include "kernel/kernel.cuh"
 
-namespace ghp
+namespace gph
 {
 
 //----------------//
