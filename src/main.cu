@@ -41,8 +41,8 @@ int main() {
     initGraphite();
 
     // Frame buffer
-    constexpr unsigned int width = 500;
-    constexpr unsigned int height = 500;
+    constexpr unsigned int width = 1080;
+    constexpr unsigned int height = 720;
 
     size_t framebufferMem = sizeof(uint8_t) * width * height * 3;
     std::cout << "Frame Buffer Mem (GPU): " << static_cast<float>(framebufferMem) / (1024 * 1024) << "MB" << std::endl;
