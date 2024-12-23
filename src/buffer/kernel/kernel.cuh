@@ -1,6 +1,7 @@
 #pragma once
 
 #include <math/linalg.cuh>
+#include <math/geometry.cuh>
 
 /**
  * 1) Join all the meshes of a scene.
