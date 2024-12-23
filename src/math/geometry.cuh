@@ -21,6 +21,21 @@ struct Triangle {
 };
 
 template <typename T>
+__gph__ vec3<T> barycentric(vec3<T> p, Triangle<T> triangle) {
+
+    T denom = (triangle.v2.y - triangle.v3.y) * (triangle.v1.x - triangle.v3.x) + (triangle.v3.x - triangle.v2.x) * (triangle.v1.y - triangle.v3.y);
+    T alpha = (triangle.v2.y - triangle.v3.y) * (p.x - triangle.v3.x) + (triangle.v3.x - triangle.v2.x) * (p.y - triangle.v3.y);
+    T beta = (triangle.v3.y - triangle.v1.y) * (p.x - triangle.v3.x) + (triangle.v1.x - triangle.v3.x) * (p.y - triangle.v3.y);
+    
+    alpha /= denom;
+    beta /= denom;
+    
+    T gamma = 1.0 - alpha - beta;
+
+    return vec3<T>(alpha, beta, gamma);
+}
+
+template <typename T>
 struct Ray {
 
     struct HitInfo {
