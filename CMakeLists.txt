@@ -51,6 +51,7 @@ set(CUDA_HEADERS
     src/buffer/buffer.cuh
     src/buffer/kernel/kernel.cuh
     src/math/linalg.cuh
+    src/math/geometry.cuh
 )
 
 # Source Files
