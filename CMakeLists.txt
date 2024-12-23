@@ -49,6 +49,8 @@ set(CXX_HEADERS
 
 set(CUDA_HEADERS
     src/buffer/buffer.cuh
+    src/buffer/kernel/kernel.cuh
+    src/math/linalg.cuh
 )
 
 # Source Files

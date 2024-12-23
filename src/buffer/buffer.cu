@@ -222,26 +222,24 @@ void FrameBuffer::unbind() {
 //   VertexBuffer   //
 //------------------//
 
-VertexBuffer::VertexBuffer(unsigned int id, float* data, size_t size, const Attributes& _attr) 
-    : Buffer(id, size), attributes(_attr) {
+VertexBuffer::VertexBuffer(unsigned int id, float* data, size_t size) 
+    : Buffer(id, size) {
     cudaMemcpy(buffer, data, size, cudaMemcpyHostToDevice);
     check_cuda_error("VertexBuffer::VertexBuffer cudaMemcpy");
 }
 
 VertexBuffer::VertexBuffer(const VertexBuffer& vertexBuffer) 
-    : Buffer(vertexBuffer), attributes(vertexBuffer.attributes) {
+    : Buffer(vertexBuffer) {
 }
 
 VertexBuffer::VertexBuffer(VertexBuffer&& vertexBuffer) noexcept 
-    : Buffer(std::move(vertexBuffer)), attributes(std::move(vertexBuffer.attributes)) {
-    vertexBuffer.attributes = {};
+    : Buffer(std::move(vertexBuffer)) {
 }
 
 VertexBuffer& VertexBuffer::operator=(const VertexBuffer& vertexBuffer) {
 
     if(this != &vertexBuffer) {
         Buffer::operator=(vertexBuffer);
-        attributes = vertexBuffer.attributes;
     }
 
     return *this;
@@ -251,18 +249,17 @@ VertexBuffer& VertexBuffer::operator=(VertexBuffer&& vertexBuffer) noexcept {
 
     if(this != &vertexBuffer) {
         Buffer::operator=(std::move(vertexBuffer));
-        attributes = std::move(vertexBuffer.attributes);
     }
 
     return *this;
 }
 
-Ptr<VertexBuffer> VertexBuffer::New(float* data, size_t size, const Attributes& attributes) {
+Ptr<VertexBuffer> VertexBuffer::New(float* data, size_t size) {
 
     BufferRegister* bufferRegister = BufferRegister::getInstance();
 
     int id = bufferRegister->getVertexBuffers().size() + 1;
-    Ptr<VertexBuffer> vertexBuffer = std::make_shared<VertexBuffer>(id, data, size, attributes);
+    Ptr<VertexBuffer> vertexBuffer = std::make_shared<VertexBuffer>(id, data, size);
     bufferRegister->addVertexBuffer(vertexBuffer);
 
     return vertexBuffer;

@@ -136,12 +136,7 @@ public:
 
 class VertexBuffer : public Buffer {
 public:
-    using Attribute = std::pair<unsigned int, unsigned int>;
-    using Attributes = std::map<unsigned int, unsigned int>;
-private:
-    Attributes attributes;
-public:
-    VertexBuffer(unsigned int id, float* data, size_t size, const Attributes& _attr);
+    VertexBuffer(unsigned int id, float* data, size_t size);
     VertexBuffer() = default;
 
     ~VertexBuffer() = default;
@@ -152,12 +147,10 @@ public:
     VertexBuffer& operator=(const VertexBuffer& vertexBuffer);
     VertexBuffer& operator=(VertexBuffer&& vertexBuffer) noexcept;
 public:
-    static Ptr<VertexBuffer> New(float* data, size_t size, const Attributes& attributes);
+    static Ptr<VertexBuffer> New(float* data, size_t size);
 public:
     void bind() override;
     void unbind() override;
-public:
-    inline const Attributes& getAttributes() { return attributes; }
 };
 
 //-----------------//

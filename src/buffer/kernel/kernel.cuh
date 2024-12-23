@@ -1,5 +1,7 @@
 #pragma once
 
+#include <math/linalg.cuh>
+
 /**
  * 1) Join all the meshes of a scene.
  * 2) Send them to GPU using VertexBuffer.
@@ -23,6 +25,9 @@ __global__ void kernel(uint8_t* frameBuffer, float* vertexBuffer,
 
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
+
+    float3 origin = make_float3((2 * x - width) / height, (2 * y - height) / height, 0.0f);
+    float3 direction = make_float3(0.0f, 0.0f, -1.0f);
 
     setPixel(frameBuffer, x, y, width, make_uchar3(128, 50, 255));
 }

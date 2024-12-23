@@ -10,10 +10,28 @@
 #include <vendor/stb_image_write.h>
 
 #include "buffer/buffer.cuh"
+#include "math/linalg.cuh"
 
 using namespace ghp;
 
 int main() {
+
+
+
+    mat4<float> matrix(1.0f);
+    matrix.row1 = { 1.0f, 2.0f, 3.0f, -0.3f };
+    matrix.row2 = { 3.0f, -1.0f, 0.5f, 2.0f };
+    matrix.row3 = { -1.0f, 1.0f, -5.5f, 4.0f };
+    matrix.row4 = { -2.0f, 3.0f, -3.5f, 1.0f };
+
+    matrix = matrix.inverse();
+    matrix = matrix.inverse();
+
+    std::cout << matrix.row1.x << " " << matrix.row1.y << " " << matrix.row1.z << " " << matrix.row1.w << std::endl;
+    std::cout << matrix.row2.x << " " << matrix.row2.y << " " << matrix.row2.z << " " << matrix.row2.w << std::endl;
+    std::cout << matrix.row3.x << " " << matrix.row3.y << " " << matrix.row3.z << " " << matrix.row3.w << std::endl;
+    std::cout << matrix.row4.x << " " << matrix.row4.y << " " << matrix.row4.z << " " << matrix.row4.w << std::endl;
+
 
     size_t freeMem, totalMem;
     cudaMemGetInfo(&freeMem, &totalMem);
@@ -33,18 +51,14 @@ int main() {
     Ptr<FrameBuffer> frameBuffer = FrameBuffer::New(width, height);
     frameBuffer->bind();
 
-    // Vertex Buffer
+    // Vertex Buffer. x y z r g b nx ny nz u v tanx tany tanz bitanx bitany bitanz
     float data[18] = {
          0.0f,  0.5f, 1.0f,  1.0f, 0.0f, 0.0f,
          0.5f, -0.5f, 1.0f,  0.0f, 1.0f, 0.0f,
         -0.5f, -0.5f, 1.0f,  0.0f, 0.0f, 1.0f
     };
-
-    VertexBuffer::Attributes attributes;
-    attributes.insert(VertexBuffer::Attribute(0, 3)); // (0) Position: x, y, z
-    attributes.insert(VertexBuffer::Attribute(1, 3)); // (1) Color: r, g, b
     
-    Ptr<VertexBuffer> vertexBuffer = VertexBuffer::New(data, sizeof(data), attributes);
+    Ptr<VertexBuffer> vertexBuffer = VertexBuffer::New(data, sizeof(data));
     vertexBuffer->bind();
 
     unsigned int indices[3] = { 0, 1, 2 };
