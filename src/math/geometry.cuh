@@ -70,18 +70,19 @@ struct Ray {
         float inv_det = 1.0 / det;
         vec3<T> s = origin - triangle.v1;
 
-        float u = inv_det * dot(s, ray_cross_e2);
+        float u = inv_det * s.dot(ray_cross_e2);
         if (u < 0 || u > 1) return hitInfo;
 
         vec3 s_cross_e1 = s.cross(edge1);
-        float v = inv_det * direction.cross(s_cross_e1);
+        float v = direction.dot(s_cross_e1) * inv_det;
         if (v < 0 || u + v > 1) return hitInfo;
 
-        float t = inv_det * edge2.cross(s_cross_e1);
+        float t = edge2.dot(s_cross_e1) * inv_det;
         if (t > EPSILON) {
             hitInfo.intersection = vec3(origin + direction * t);
-            hitInfo.dist = t;
-            hitInfo.normal = normalize(cross(edge2, edge1));
+            hitInfo.distance = t;
+            vec3<T> normal = edge2.cross(edge1);
+            hitInfo.normal = normal / normal.module();
             hitInfo.hit = true;
         }
 

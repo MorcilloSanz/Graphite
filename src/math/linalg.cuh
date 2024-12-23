@@ -55,19 +55,19 @@ struct vec2 {
 
     // Operators
     __gph__ vec2 operator+(const vec2& vec) const {
-        sum(vec);
+        return sum(vec);
     }
 
     __gph__ vec2 operator+(T value) const {
-        sum(vec2(value));
+        return sum(vec2(value));
     }
 
     __gph__ vec2 operator-(const vec2& vec) const {
-        subtract(vec);
+        return subtract(vec);
     }
 
     __gph__ vec2 operator-(T value) const {
-        subtract(vec2(value));
+        return subtract(vec2(value));
     }
 
     __gph__ vec2 operator*(const vec2& vec) const {
@@ -144,19 +144,19 @@ struct vec3 {
 
     // Operators
     __gph__ vec3 operator+(const vec3& vec) const {
-        sum(vec);
+        return sum(vec);
     }
 
     __gph__ vec3 operator+(T value) const {
-        sum(vec3(value));
+        return sum(vec3(value));
     }
 
     __gph__ vec3 operator-(const vec3& vec) const {
-        subtract(vec);
+        return subtract(vec);
     }
 
     __gph__ vec3 operator-(T value) const {
-        subtract(vec3(value));
+        return subtract(vec3(value));
     }
 
     __gph__ vec3 operator*(const vec3& vec) const {
@@ -230,19 +230,19 @@ struct vec4 {
 
     // Operators
     __gph__ vec4 operator+(const vec4& vec) const {
-        sum(vec);
+        return sum(vec);
     }
 
     __gph__ vec4 operator+(T value) const {
-        sum(vec4(value));
+        return sum(vec4(value));
     }
 
     __gph__ vec4 operator-(const vec4& vec) const {
-        subtract(vec);
+        return subtract(vec);
     }
 
     __gph__ vec4 operator-(T value) const {
-        subtract(vec4(value));
+        return subtract(vec4(value));
     }
 
     __gph__ vec4 operator*(const vec4& vec) const {
@@ -391,35 +391,35 @@ struct mat2 {
 
     // Operators
     __gph__ mat2 operator+(const mat2& matrix) const {
-        sum(matrix);
+        return sum(matrix);
     }
 
     __gph__ mat2 operator+(T value) const {
-        sum(mat2<T>::full(value));
+        return sum(mat2<T>::full(value));
     }
 
     __gph__ mat2 operator-(const mat2& matrix) const {
-        subtract(matrix);
+        return subtract(matrix);
     }
 
     __gph__ mat2 operator-(T value) const {
-        subtract(mat2<T>::full(value));
+        return subtract(mat2<T>::full(value));
     }
 
     __gph__ mat2 operator*(const mat2& matrix) const {
-        hadamard(matrix);
+        return hadamard(matrix);
     }
 
     __gph__ mat2 operator*(T value) const {
-        hadamard(mat2<T>::full(value));
+        return hadamard(mat2<T>::full(value));
     }
 
     __gph__ mat2 operator/(const mat2& matrix) const {
-        div(matrix);
+        return div(matrix);
     }
 
     __gph__ mat2 operator/(T value) const {
-        div(mat2<T>::full(value));
+        return div(mat2<T>::full(value));
     }
 };
 

@@ -27,10 +27,26 @@ __global__ void kernel(uint8_t* frameBuffer, float* vertexBuffer,
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
 
-    float3 origin = make_float3((2 * x - width) / height, (2 * y - height) / height, 0.0f);
-    float3 direction = make_float3(0.0f, 0.0f, -1.0f);
+    vec3<float> origin = {
+        2.0 * x / width - 1.0, 
+        2.0 * y / height - 1.0, 
+        1.0f 
+    };
+    vec3<float> direction = { 0.0f, 0.0f, -1.0f };
+    Ray<float> ray(origin, direction);
 
-    setPixel(frameBuffer, x, y, width, make_uchar3(128, 50, 255));
+    vec3<float> v1 = { vertexBuffer[0], vertexBuffer[1], vertexBuffer[2] };
+    vec3<float> v2 = { vertexBuffer[6], vertexBuffer[7], vertexBuffer[8] };
+    vec3<float> v3 = { vertexBuffer[12], vertexBuffer[13], vertexBuffer[14] };
+    Triangle<float> triangle (v1, v2, v3);
+
+    Ray<float>::HitInfo hitInfo = ray.intersects(triangle);
+
+    if(hitInfo.hit) {
+        setPixel(frameBuffer, x, y, width, make_uchar3(255, 255, 255));
+    }else {
+        setPixel(frameBuffer, x, y, width, make_uchar3(128, 50, 255));
+    }
 }
 
 }
