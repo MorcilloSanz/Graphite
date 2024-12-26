@@ -22,29 +22,46 @@ void draw() {
     BufferRegister* bufferRegister = BufferRegister::getInstance();
     if(bufferRegister->getBindedFrameBufferID() > 0) {
 
-        // FrameBuffer
+        // Kernel Frame Buffer
         Ptr<FrameBuffer> bindedFrameBuffer = bufferRegister->getBindedFrameBuffer();
-        uint8_t* frameBuffer = (uint8_t*)bindedFrameBuffer->getBuffer();
-        
         const unsigned int width = bindedFrameBuffer->getWidth();
         const unsigned int height = bindedFrameBuffer->getHeight();
 
-        // Vertex Buffer
-        float* vertexBuffer = nullptr;
-        if(bufferRegister->getBindedVertexBufferID() > 0)
-            vertexBuffer = (float*)bufferRegister->getBindedVertexBuffer()->getBuffer();
+        KernelFrameBuffer kernelFrameBuffer((uint8_t*)bindedFrameBuffer->getBuffer(), width, height);
+        
+        // Kernel Vertex Buffer
+        size_t vertexBufferSize = 0;
+        void* vertexBuffer = nullptr;
 
+        if(bufferRegister->getBindedVertexBufferID() > 0) {
+            Ptr<VertexBuffer> bindedVertexBuffer = bufferRegister->getBindedVertexBuffer();
+            vertexBuffer = bindedVertexBuffer->getBuffer();
+            vertexBufferSize = bindedVertexBuffer->getSize();
+        }
+
+        KernelBuffer kernelVertexBuffer(vertexBuffer, vertexBufferSize / sizeof(float));
+            
         // Index Buffer
-        unsigned int* indexBuffer = nullptr;
-        if(bufferRegister->getBindedIndexBufferID() > 0)
-            indexBuffer = (unsigned int*)bufferRegister->getBindedIndexBuffer()->getBuffer();
+        size_t indexBufferSize = 0;
+        void* indexBuffer = nullptr;
 
-        // Draw kernel
+        if(bufferRegister->getBindedIndexBufferID() > 0) {
+            Ptr<IndexBuffer> bindedIndexBuffer = bufferRegister->getBindedIndexBuffer();
+            indexBuffer = bindedIndexBuffer->getBuffer();
+            indexBufferSize = bindedIndexBuffer->getSize();
+        }
+
+        KernelBuffer kernelIndexBuffer(indexBuffer, indexBufferSize / sizeof(unsigned int));
+
+        // Vertex kernel -> transform each vertex
+
+  
+        // Fragment kernel -> compute each fragment
         dim3 threadsPerBlock(16, 16);
         dim3 blocksPerGrid((width + threadsPerBlock.x - 1) / threadsPerBlock.x,
                         (height + threadsPerBlock.y - 1) / threadsPerBlock.y);
 
-        kernel<<<blocksPerGrid, threadsPerBlock>>>(frameBuffer, vertexBuffer, indexBuffer, width, height);
+        kernel<<<blocksPerGrid, threadsPerBlock>>>(kernelFrameBuffer, kernelVertexBuffer, kernelIndexBuffer);
         cudaDeviceSynchronize();
     }
 }
@@ -77,6 +94,8 @@ Buffer::Buffer(unsigned int _id, size_t _size)
     : id(_id), size(_size) {
     cudaMalloc((void**)&buffer, size);
     check_cuda_error("Buffer::Buffer cudaMalloc");
+    cudaMemset(buffer, 0, size);
+    check_cuda_error("Buffer::Buffer cudaMemset");
 }
 
 Buffer::~Buffer() {

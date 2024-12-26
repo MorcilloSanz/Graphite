@@ -13,23 +13,52 @@
 namespace gph 
 {
 
-__device__ void setPixel(uint8_t* frameBuffer, int x, int y, unsigned int width, 
+struct KernelFrameBuffer {
+
+    uint8_t* buffer;
+    unsigned int width, height;
+
+    KernelFrameBuffer(uint8_t* _buffer, unsigned int _width, unsigned int _height)
+        : buffer(_buffer), width(_width), height(_height) {
+    }
+
+    KernelFrameBuffer() = default;
+    ~KernelFrameBuffer() = default;
+};
+
+struct KernelBuffer {
+
+    void* buffer;
+    size_t count;
+
+    KernelBuffer(void* _buffer, size_t _count)
+        : buffer(_buffer), count(_count) {
+    }
+
+    KernelBuffer() = default;
+    ~KernelBuffer() = default;
+};
+
+__device__ void setPixel(KernelFrameBuffer frameBuffer, int x, int y, 
     const vec3<unsigned char>& color) {
 
-    frameBuffer[3 * (x + y * width)    ] = color.r;
-    frameBuffer[3 * (x + y * width) + 1] = color.g;
-    frameBuffer[3 * (x + y * width) + 2] = color.b;
+    frameBuffer.buffer[3 * (x + y * frameBuffer.width)    ] = color.r;
+    frameBuffer.buffer[3 * (x + y * frameBuffer.width) + 1] = color.g;
+    frameBuffer.buffer[3 * (x + y * frameBuffer.width) + 2] = color.b;
 }
 
-__global__ void kernel(uint8_t* frameBuffer, float* vertexBuffer, 
-    unsigned int* indexBuffer, unsigned int width, unsigned int height) {
+__global__ void kernel(KernelFrameBuffer kernelFrameBuffer, KernelBuffer kernelVertexBuffer, 
+    KernelBuffer kernelIndexBuffer) {
 
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
 
+    float* vertexBuffer = (float*) kernelVertexBuffer.buffer;
+    unsigned int* indexBuffer = (unsigned int*) kernelIndexBuffer.buffer;
+
     vec3<float> origin = {
-        2.0 * x / width - 1.0, 
-        2.0 * y / height - 1.0, 
+        2.0 * x / kernelFrameBuffer.width - 1.0, 
+        2.0 * y / kernelFrameBuffer.height - 1.0, 
         0.01f 
     };
     vec3<float> direction = { 0.0f, 0.0f, -1.0f };
@@ -57,9 +86,9 @@ __global__ void kernel(uint8_t* frameBuffer, float* vertexBuffer,
             static_cast<unsigned char>(colorInterpolation.z * 255),
         };
 
-        setPixel(frameBuffer, x, y, width, pixelColor);
+        setPixel(kernelFrameBuffer, x, y, pixelColor);
     }else {
-        setPixel(frameBuffer, x, y, width, vec3<unsigned char>(0, 0, 0));
+        setPixel(kernelFrameBuffer, x, y, vec3<unsigned char>(0, 0, 0));
     }
 }
 
