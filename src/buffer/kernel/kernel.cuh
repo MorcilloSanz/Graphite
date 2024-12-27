@@ -10,6 +10,15 @@
  * 5) Pass the BVH as a parameter to the kernel
  */
 
+#define ATTRIBUTE_X 0
+#define ATTRIBUTE_Y 1
+#define ATTRIBUTE_Z 2
+#define ATTRIBUTE_R 3
+#define ATTRIBUTE_G 4
+#define ATTRIBUTE_B 5
+
+#define ATTRIBUTE_STRIDE 6
+
 namespace gph 
 {
 
@@ -39,6 +48,21 @@ struct KernelBuffer {
     ~KernelBuffer() = default;
 };
 
+template <typename T>
+__device__ Ray<T> castRay(int x, int y, unsigned int width, unsigned int height) {
+
+    vec3<float> origin = {
+        2.0 * x / width - 1.0, 
+        2.0 * y / height - 1.0, 
+        0.01f 
+    };
+
+    vec3<float> direction = { 0.0f, 0.0f, -1.0f };
+    Ray<float> ray(origin, direction);
+
+    return ray;
+}
+
 __device__ void setPixel(KernelFrameBuffer frameBuffer, int x, int y, 
     const vec3<unsigned char>& color) {
 
@@ -56,40 +80,38 @@ __global__ void kernel(KernelFrameBuffer kernelFrameBuffer, KernelBuffer kernelV
     float* vertexBuffer = (float*) kernelVertexBuffer.buffer;
     unsigned int* indexBuffer = (unsigned int*) kernelIndexBuffer.buffer;
 
-    vec3<float> origin = {
-        2.0 * x / kernelFrameBuffer.width - 1.0, 
-        2.0 * y / kernelFrameBuffer.height - 1.0, 
-        0.01f 
-    };
-    vec3<float> direction = { 0.0f, 0.0f, -1.0f };
-    Ray<float> ray(origin, direction);
+    Ray<float> ray = castRay<float>(x, y, kernelFrameBuffer.width, kernelFrameBuffer.height);
 
-    vec3<float> v1 = { vertexBuffer[0], vertexBuffer[1], vertexBuffer[2] };
-    vec3<float> v2 = { vertexBuffer[6], vertexBuffer[7], vertexBuffer[8] };
-    vec3<float> v3 = { vertexBuffer[12], vertexBuffer[13], vertexBuffer[14] };
+    for(int i = 0; i < kernelIndexBuffer.count; i += 3) {
 
-    Triangle<float> triangle (v1, v2, v3);
-    Ray<float>::HitInfo hitInfo = ray.intersects(triangle);
+        vec3<float> v1 = { vertexBuffer[(i + 0) * ATTRIBUTE_STRIDE + ATTRIBUTE_X], vertexBuffer[(i + 0) * ATTRIBUTE_STRIDE + ATTRIBUTE_Y], vertexBuffer[(i + 0) * ATTRIBUTE_STRIDE + ATTRIBUTE_Z] };
+        vec3<float> v2 = { vertexBuffer[(i + 1) * ATTRIBUTE_STRIDE + ATTRIBUTE_X], vertexBuffer[(i + 1) * ATTRIBUTE_STRIDE + ATTRIBUTE_Y], vertexBuffer[(i + 1) * ATTRIBUTE_STRIDE + ATTRIBUTE_Z] };
+        vec3<float> v3 = { vertexBuffer[(i + 2) * ATTRIBUTE_STRIDE + ATTRIBUTE_X], vertexBuffer[(i + 2) * ATTRIBUTE_STRIDE + ATTRIBUTE_Y], vertexBuffer[(i + 2) * ATTRIBUTE_STRIDE + ATTRIBUTE_Z] };
 
-    if(hitInfo.hit) {
+        Triangle<float> triangle (v1, v2, v3);
+        Ray<float>::HitInfo hitInfo = ray.intersects(triangle);
 
-        vec3<float> c1 = { vertexBuffer[3], vertexBuffer[4], vertexBuffer[5] };
-        vec3<float> c2 = { vertexBuffer[9], vertexBuffer[10], vertexBuffer[11] };
-        vec3<float> c3 = { vertexBuffer[15], vertexBuffer[16], vertexBuffer[17] };
+        if(hitInfo.hit) {
 
-        vec3<float> barycentricCoords = barycentric<float>(hitInfo.intersection, triangle);
-        vec3 colorInterpolation = c1 * barycentricCoords.x + c2 * barycentricCoords.y + c3 * barycentricCoords.z;
+            vec3<float> c1 = { vertexBuffer[(i + 0) * ATTRIBUTE_STRIDE + ATTRIBUTE_R], vertexBuffer[(i + 0) * ATTRIBUTE_STRIDE + ATTRIBUTE_G], vertexBuffer[(i + 0) * ATTRIBUTE_STRIDE + ATTRIBUTE_B] };
+            vec3<float> c2 = { vertexBuffer[(i + 1) * ATTRIBUTE_STRIDE + ATTRIBUTE_R], vertexBuffer[(i + 1) * ATTRIBUTE_STRIDE + ATTRIBUTE_G], vertexBuffer[(i + 1) * ATTRIBUTE_STRIDE + ATTRIBUTE_B] };
+            vec3<float> c3 = { vertexBuffer[(i + 2) * ATTRIBUTE_STRIDE + ATTRIBUTE_R], vertexBuffer[(i + 2) * ATTRIBUTE_STRIDE + ATTRIBUTE_G], vertexBuffer[(i + 2) * ATTRIBUTE_STRIDE + ATTRIBUTE_B] };
 
-        vec3<unsigned char> pixelColor = {
-            static_cast<unsigned char>(colorInterpolation.x * 255),
-            static_cast<unsigned char>(colorInterpolation.y * 255),
-            static_cast<unsigned char>(colorInterpolation.z * 255),
-        };
+            vec3<float> barycentricCoords = barycentric<float>(hitInfo.intersection, triangle);
+            vec3<float> colorInterpolation = c1 * barycentricCoords.x + c2 * barycentricCoords.y + c3 * barycentricCoords.z;
 
-        setPixel(kernelFrameBuffer, x, y, pixelColor);
-    }else {
-        setPixel(kernelFrameBuffer, x, y, vec3<unsigned char>(0, 0, 0));
+            vec3<unsigned char> pixelColor = {
+                static_cast<unsigned char>(colorInterpolation.x * 255),
+                static_cast<unsigned char>(colorInterpolation.y * 255),
+                static_cast<unsigned char>(colorInterpolation.z * 255),
+            };
+
+            setPixel(kernelFrameBuffer, x, y, pixelColor);
+        }else {
+            setPixel(kernelFrameBuffer, x, y, vec3<unsigned char>(0, 0, 0));
+        }
     }
+
 }
 
 }

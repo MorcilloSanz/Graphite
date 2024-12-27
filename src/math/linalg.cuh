@@ -2,8 +2,6 @@
 
 #include <cmath>
 
-#define __gph__ __host__ __device__
-
 namespace gph
 {
 
@@ -13,76 +11,76 @@ struct vec2 {
     union { T x; T u; };
     union { T y; T v; };
 
-    __gph__ vec2(T _x, T _y)
+    __host__ __device__ vec2(T _x, T _y)
         : x(_x), y(_y) {
     }
 
-    __gph__ vec2(T value)
+    __host__ __device__ vec2(T value)
         : vec2(value, value) {
     }
 
-    __gph__ vec2() = default;
-    __gph__ ~vec2() = default;
+    __host__ __device__ vec2() = default;
+    __host__ __device__ ~vec2() = default;
 
     // Operations
-    __gph__ vec2 sum(const vec2& vec) const {
+    __host__ __device__ vec2 sum(const vec2& vec) const {
         return vec2(x + vec.x, y + vec.y);
     }
 
-    __gph__ vec2 subtract(const vec2& vec) const {
+    __host__ __device__ vec2 subtract(const vec2& vec) const {
         return vec2(x - vec.x, y - vec.y);
     }
 
-    __gph__ vec2 hadamard(const vec2& vec) const {
+    __host__ __device__ vec2 hadamard(const vec2& vec) const {
         return vec2(x * vec.x, y * vec.y);
     }
 
-    __gph__ vec2 div(const vec2& vec) const {
+    __host__ __device__ vec2 div(const vec2& vec) const {
         return vec2(x / vec.x, y / vec.y);
     }
 
-    __gph__ T dot(const vec2& vec) const {
+    __host__ __device__ T dot(const vec2& vec) const {
         return x * vec.x + y * vec.y;
     }
 
-    __gph__ T cross(const vec2& vec) const {
+    __host__ __device__ T cross(const vec2& vec) const {
         return x * vec.y - y * vec.x;
     }
 
-    __gph__ T module() const {
+    __host__ __device__ T module() const {
         return sqrt(x * x + y * y);
     }
 
     // Operators
-    __gph__ vec2 operator+(const vec2& vec) const {
+    __host__ __device__ vec2 operator+(const vec2& vec) const {
         return sum(vec);
     }
 
-    __gph__ vec2 operator+(T value) const {
+    __host__ __device__ vec2 operator+(T value) const {
         return sum(vec2(value));
     }
 
-    __gph__ vec2 operator-(const vec2& vec) const {
+    __host__ __device__ vec2 operator-(const vec2& vec) const {
         return subtract(vec);
     }
 
-    __gph__ vec2 operator-(T value) const {
+    __host__ __device__ vec2 operator-(T value) const {
         return subtract(vec2(value));
     }
 
-    __gph__ vec2 operator*(const vec2& vec) const {
+    __host__ __device__ vec2 operator*(const vec2& vec) const {
         return hadamard(vec);
     }
 
-    __gph__ vec2 operator*(T value) const {
+    __host__ __device__ vec2 operator*(T value) const {
         return hadamard(vec2(value));
     }
 
-    __gph__ vec2 operator/(const vec2& vec) const {
+    __host__ __device__ vec2 operator/(const vec2& vec) const {
         return div(vec);
     }
 
-    __gph__ vec2 operator/(T value) const {
+    __host__ __device__ vec2 operator/(T value) const {
         return div(vec2(value));
     }
 };
@@ -98,80 +96,80 @@ struct vec3 {
     union { T y; T g; };
     union { T z; T b; };
 
-    __gph__ vec3(T _x, T _y, T _z)
+    __host__ __device__ vec3(T _x, T _y, T _z)
         : x(_x), y(_y), z(_z) {
     }
 
-    __gph__ vec3(T value)
+    __host__ __device__ vec3(T value)
         : vec3(value, value, value) {
     }
 
-    __gph__ vec3() = default;
-    __gph__ ~vec3() = default;
+    __host__ __device__ vec3() = default;
+    __host__ __device__ ~vec3() = default;
 
     // Operations
-    __gph__ vec3 sum(const vec3& vec) const {
+    __host__ __device__ vec3 sum(const vec3& vec) const {
         return vec3(x + vec.x, y + vec.y, z + vec.z);
     }
 
-    __gph__ vec3 subtract(const vec3& vec) const {
+    __host__ __device__ vec3 subtract(const vec3& vec) const {
         return vec3(x - vec.x, y - vec.y, z - vec.z);
     }
 
-    __gph__ vec3 hadamard(const vec3& vec) const {
+    __host__ __device__ vec3 hadamard(const vec3& vec) const {
         return vec3(x * vec.x, y * vec.y, z * vec.z);
     }
 
-    __gph__ vec3 div(const vec3& vec) const {
+    __host__ __device__ vec3 div(const vec3& vec) const {
         return vec3(x / vec.x, y / vec.y, z / vec.z);
     }
 
-    __gph__ T dot(const vec3& vec) const {
+    __host__ __device__ T dot(const vec3& vec) const {
         return x * vec.x + y * vec.y + z * vec.z;
     }
 
-    __gph__ vec3 cross(const vec3& vec) const {
+    __host__ __device__ vec3 cross(const vec3& vec) const {
         return vec3(y * vec.z - z * vec.y, -x * vec.z + z * vec.x, x * vec.y - y * vec.x);
     }
 
-    __gph__ T module() const {
+    __host__ __device__ T module() const {
         return sqrt(x * x + y * y + z * z);
     }
 
-    __gph__ vec2<T> xy() const {
+    __host__ __device__ vec2<T> xy() const {
         return vec2<T>(x, y);
     }
 
     // Operators
-    __gph__ vec3 operator+(const vec3& vec) const {
+    __host__ __device__ vec3 operator+(const vec3& vec) const {
         return sum(vec);
     }
 
-    __gph__ vec3 operator+(T value) const {
+    __host__ __device__ vec3 operator+(T value) const {
         return sum(vec3(value));
     }
 
-    __gph__ vec3 operator-(const vec3& vec) const {
+    __host__ __device__ vec3 operator-(const vec3& vec) const {
         return subtract(vec);
     }
 
-    __gph__ vec3 operator-(T value) const {
+    __host__ __device__ vec3 operator-(T value) const {
         return subtract(vec3(value));
     }
 
-    __gph__ vec3 operator*(const vec3& vec) const {
+    __host__ __device__ vec3 operator*(const vec3& vec) const {
         return hadamard(vec);
     }
 
-    __gph__ vec3 operator*(T value) const {
+    __host__ __device__ vec3 operator*(T value) const {
         return hadamard(vec3(value));
     }
 
-    __gph__ vec3 operator/(const vec3& vec) const {
+    __host__ __device__ vec3 operator/(const vec3& vec) const {
         return div(vec);
     }
 
-    __gph__ vec3 operator/(T value) const {
+    __host__ __device__ vec3 operator/(T value) const {
         return div(vec3(value));
     }
 };
@@ -188,76 +186,76 @@ struct vec4 {
     union { T z; T b; };
     union { T w; T a; };
 
-    __gph__ vec4(T _x, T _y, T _z, T _w)
+    __host__ __device__ vec4(T _x, T _y, T _z, T _w)
         : x(_x), y(_y), z(_z), w(_w) {
     }
 
-    __gph__ vec4(T value)
+    __host__ __device__ vec4(T value)
         : vec4(value, value, value, value) {
     }
 
-    __gph__ vec4() = default;
-    __gph__ ~vec4() = default;
+    __host__ __device__ vec4() = default;
+    __host__ __device__ ~vec4() = default;
 
     // Operations
-    __gph__ vec4 sum(const vec4& vec) const {
+    __host__ __device__ vec4 sum(const vec4& vec) const {
         return vec4(x + vec.x, y + vec.y, z + vec.z, w + vec.w);
     }
 
-    __gph__ vec4 subtract(const vec4& vec) const {
+    __host__ __device__ vec4 subtract(const vec4& vec) const {
         return vec4(x - vec.x, y - vec.y, z - vec.z, w - vec.w);
     }
 
-    __gph__ vec4 hadamard(const vec4& vec) const {
+    __host__ __device__ vec4 hadamard(const vec4& vec) const {
         return vec4(x * vec.x, y * vec.y, z * vec.z, w * vec.w);
     }
 
-    __gph__ vec4 div(const vec4& vec) const {
+    __host__ __device__ vec4 div(const vec4& vec) const {
         return vec4(x / vec.x, y / vec.y, z / vec.z, w / vec.w);
     }
 
-    __gph__ T dot(const vec4& vec) const {
+    __host__ __device__ T dot(const vec4& vec) const {
         return x * vec.x + y * vec.y + z * vec.z, w * vec.w;
     }
 
-    __gph__ T module() const {
+    __host__ __device__ T module() const {
         return sqrt(x * x + y * y + z * z + w * w);
     }
 
-    __gph__ vec3<T> xyz() const {
+    __host__ __device__ vec3<T> xyz() const {
         return vec3<T>(x, y, z);
     }
 
     // Operators
-    __gph__ vec4 operator+(const vec4& vec) const {
+    __host__ __device__ vec4 operator+(const vec4& vec) const {
         return sum(vec);
     }
 
-    __gph__ vec4 operator+(T value) const {
+    __host__ __device__ vec4 operator+(T value) const {
         return sum(vec4(value));
     }
 
-    __gph__ vec4 operator-(const vec4& vec) const {
+    __host__ __device__ vec4 operator-(const vec4& vec) const {
         return subtract(vec);
     }
 
-    __gph__ vec4 operator-(T value) const {
+    __host__ __device__ vec4 operator-(T value) const {
         return subtract(vec4(value));
     }
 
-    __gph__ vec4 operator*(const vec4& vec) const {
+    __host__ __device__ vec4 operator*(const vec4& vec) const {
         return hadamard(vec);
     }
 
-    __gph__ vec4 operator*(T value) const {
+    __host__ __device__ vec4 operator*(T value) const {
         return hadamard(vec4(value));
     }
 
-    __gph__ vec4 operator/(const vec4& vec) const {
+    __host__ __device__ vec4 operator/(const vec4& vec) const {
         return div(vec);
     }
 
-    __gph__ vec4 operator/(T value) const {
+    __host__ __device__ vec4 operator/(T value) const {
         return div(vec4(value));
     }
 };
@@ -271,19 +269,19 @@ struct mat2 {
 
     vec2<T> row1, row2;
 
-    __gph__ mat2(T value) {
+    __host__ __device__ mat2(T value) {
         row1 = vec2<T>(value, 0);
         row2 = vec2<T>(0, value);
     }   
 
-    __gph__ mat2() {
+    __host__ __device__ mat2() {
         row1 = vec2<T>(0);
         row2 = vec2<T>(0);
     }
 
-    __gph__ ~mat2() = default;
+    __host__ __device__ ~mat2() = default;
 
-    __gph__ static mat2 full(T value) {
+    __host__ __device__ static mat2 full(T value) {
 
         mat2 matrix(value);
 
@@ -294,7 +292,7 @@ struct mat2 {
     }
 
     // Operations
-    __gph__ mat2 sum(const mat2& matrix) {
+    __host__ __device__ mat2 sum(const mat2& matrix) {
 
         mat2<T> result;
 
@@ -304,7 +302,7 @@ struct mat2 {
         return result;
     }
 
-    __gph__ mat2 subtract(const mat2& matrix) {
+    __host__ __device__ mat2 subtract(const mat2& matrix) {
 
         mat2<T> result;
 
@@ -314,7 +312,7 @@ struct mat2 {
         return result;
     }
 
-    __gph__ mat2 hadamard(const mat2& matrix) {
+    __host__ __device__ mat2 hadamard(const mat2& matrix) {
 
         mat2<T> result;
 
@@ -324,7 +322,7 @@ struct mat2 {
         return result;
     }
 
-    __gph__ mat2 div(const mat2& matrix) {
+    __host__ __device__ mat2 div(const mat2& matrix) {
 
         mat2<T> result;
 
@@ -334,7 +332,7 @@ struct mat2 {
         return result;
     }
 
-    __gph__ mat2 product(const mat2& matrix) {
+    __host__ __device__ mat2 product(const mat2& matrix) {
 
         mat2<T> result;
 
@@ -346,7 +344,7 @@ struct mat2 {
         return result;
     }
 
-    __gph__ vec2<T> transform(const vec2<T>& v) {
+    __host__ __device__ vec2<T> transform(const vec2<T>& v) {
 
         vec2<T> result;
 
@@ -356,11 +354,11 @@ struct mat2 {
         return result;
     }
 
-    __gph__ T determinant() {
+    __host__ __device__ T determinant() {
         return row1.x * row2.y - row1.y * row2.x;
     }
 
-    __gph__ mat2 inverse() {
+    __host__ __device__ mat2 inverse() {
 
         mat2<T> result;
 
@@ -377,7 +375,7 @@ struct mat2 {
         return result;
     }
 
-    __gph__ mat2 transpose() {
+    __host__ __device__ mat2 transpose() {
 
         mat2<T> result;
 
@@ -390,35 +388,35 @@ struct mat2 {
     }
 
     // Operators
-    __gph__ mat2 operator+(const mat2& matrix) const {
+    __host__ __device__ mat2 operator+(const mat2& matrix) const {
         return sum(matrix);
     }
 
-    __gph__ mat2 operator+(T value) const {
+    __host__ __device__ mat2 operator+(T value) const {
         return sum(mat2<T>::full(value));
     }
 
-    __gph__ mat2 operator-(const mat2& matrix) const {
+    __host__ __device__ mat2 operator-(const mat2& matrix) const {
         return subtract(matrix);
     }
 
-    __gph__ mat2 operator-(T value) const {
+    __host__ __device__ mat2 operator-(T value) const {
         return subtract(mat2<T>::full(value));
     }
 
-    __gph__ mat2 operator*(const mat2& matrix) const {
+    __host__ __device__ mat2 operator*(const mat2& matrix) const {
         return hadamard(matrix);
     }
 
-    __gph__ mat2 operator*(T value) const {
+    __host__ __device__ mat2 operator*(T value) const {
         return hadamard(mat2<T>::full(value));
     }
 
-    __gph__ mat2 operator/(const mat2& matrix) const {
+    __host__ __device__ mat2 operator/(const mat2& matrix) const {
         return div(matrix);
     }
 
-    __gph__ mat2 operator/(T value) const {
+    __host__ __device__ mat2 operator/(T value) const {
         return div(mat2<T>::full(value));
     }
 };
@@ -432,21 +430,21 @@ struct mat3 {
 
     vec3<T> row1, row2, row3;
 
-    __gph__ mat3(T value) {
+    __host__ __device__ mat3(T value) {
         row1 = vec3<T>(value, 0, 0);
         row2 = vec3<T>(0, value, 0);
         row3 = vec3<T>(0, 0, value);
     }
 
-    __gph__ mat3() {
+    __host__ __device__ mat3() {
         row1 = vec3<T>(0);
         row2 = vec3<T>(0);
         row3 = vec3<T>(0);
     }
 
-    __gph__ ~mat3() = default;
+    __host__ __device__ ~mat3() = default;
 
-    __gph__ static mat3 full(T value) {
+    __host__ __device__ static mat3 full(T value) {
 
         mat3 matrix(value);
 
@@ -461,7 +459,7 @@ struct mat3 {
     }
 
     // Operations
-    __gph__ mat3 sum(const mat3& matrix) {
+    __host__ __device__ mat3 sum(const mat3& matrix) {
 
         mat3<T> result;
 
@@ -472,7 +470,7 @@ struct mat3 {
         return result;
     }
 
-    __gph__ mat3 subtract(const mat3& matrix) {
+    __host__ __device__ mat3 subtract(const mat3& matrix) {
 
         mat3<T> result;
 
@@ -483,7 +481,7 @@ struct mat3 {
         return result;
     }
 
-    __gph__ mat3 hadamard(const mat3& matrix) {
+    __host__ __device__ mat3 hadamard(const mat3& matrix) {
 
         mat3<T> result;
 
@@ -494,7 +492,7 @@ struct mat3 {
         return result;
     }
 
-    __gph__ mat3 div(const mat3& matrix) {
+    __host__ __device__ mat3 div(const mat3& matrix) {
 
         mat3<T> result;
 
@@ -505,7 +503,7 @@ struct mat3 {
         return result;
     }
 
-    __gph__ mat3 product(const mat3& matrix) {
+    __host__ __device__ mat3 product(const mat3& matrix) {
 
         mat3<T> result;
 
@@ -524,7 +522,7 @@ struct mat3 {
         return result;
     }
 
-    __gph__ vec3<T> transform(const vec3<T>& v) {
+    __host__ __device__ vec3<T> transform(const vec3<T>& v) {
 
         vec3<T> result;
 
@@ -535,13 +533,13 @@ struct mat3 {
         return result;
     }
 
-    __gph__ T determinant() {
+    __host__ __device__ T determinant() {
         return row1.x * (row2.y * row3.z - row2.z * row3.y) -
                row1.y * (row2.x * row3.z - row2.z * row3.x) +
                row1.z * (row2.x * row3.y - row2.y * row3.x);
     }
 
-    __gph__ mat3 inverse() {
+    __host__ __device__ mat3 inverse() {
 
         mat3<T> result;
 
@@ -565,7 +563,7 @@ struct mat3 {
         return result;
     }
 
-    __gph__ mat3 transpose() {
+    __host__ __device__ mat3 transpose() {
 
         mat3<T> result;
 
@@ -577,35 +575,35 @@ struct mat3 {
     }
 
     // Operators
-    __gph__ mat3 operator+(const mat3& matrix) const {
+    __host__ __device__ mat3 operator+(const mat3& matrix) const {
         return sum(matrix);
     }
 
-    __gph__ mat3 operator+(T value) const {
+    __host__ __device__ mat3 operator+(T value) const {
         return sum(mat3<T>::full(value));
     }
 
-    __gph__ mat3 operator-(const mat3& matrix) const {
+    __host__ __device__ mat3 operator-(const mat3& matrix) const {
         return subtract(matrix);
     }
 
-    __gph__ mat3 operator-(T value) const {
+    __host__ __device__ mat3 operator-(T value) const {
         return subtract(mat3<T>::full(value));
     }
 
-    __gph__ mat3 operator*(const mat3& matrix) const {
+    __host__ __device__ mat3 operator*(const mat3& matrix) const {
         return hadamard(matrix);
     }
 
-    __gph__ mat3 operator*(T value) const {
+    __host__ __device__ mat3 operator*(T value) const {
         return hadamard(mat3<T>::full(value));
     }
 
-    __gph__ mat3 operator/(const mat3& matrix) const {
+    __host__ __device__ mat3 operator/(const mat3& matrix) const {
         return div(matrix);
     }
 
-    __gph__ mat3 operator/(T value) const {
+    __host__ __device__ mat3 operator/(T value) const {
         return div(mat3<T>::full(value));
     }
 };
@@ -619,23 +617,23 @@ struct mat4 {
 
     vec4<T> row1, row2, row3, row4;
 
-    __gph__ mat4(T value) {
+    __host__ __device__ mat4(T value) {
         row1 = vec4<T>(value, 0, 0, 0);
         row2 = vec4<T>(0, value, 0, 0);
         row3 = vec4<T>(0, 0, value, 0);
         row4 = vec4<T>(0, 0, 0, value);
     }
 
-    __gph__ mat4() {
+    __host__ __device__ mat4() {
         row1 = vec4<T>(0);
         row2 = vec4<T>(0);
         row3 = vec4<T>(0);
         row4 = vec4<T>(0);
     }
 
-    __gph__ ~mat4() = default;
+    __host__ __device__ ~mat4() = default;
 
-    __gph__ static mat4 full(T value) {
+    __host__ __device__ static mat4 full(T value) {
 
         mat4 matrix(value);
 
@@ -656,7 +654,7 @@ struct mat4 {
     }
 
     // Operations
-    __gph__ mat4 sum(const mat4& matrix) {
+    __host__ __device__ mat4 sum(const mat4& matrix) {
 
         mat4<T> result;
 
@@ -668,7 +666,7 @@ struct mat4 {
         return result;
     }
 
-    __gph__ mat4 subtract(const mat4& matrix) {
+    __host__ __device__ mat4 subtract(const mat4& matrix) {
 
         mat4<T> result;
 
@@ -680,7 +678,7 @@ struct mat4 {
         return result;
     }
 
-    __gph__ mat4 hadamard(const mat4& matrix) {
+    __host__ __device__ mat4 hadamard(const mat4& matrix) {
 
         mat4<T> result;
 
@@ -692,7 +690,7 @@ struct mat4 {
         return result;
     }
 
-    __gph__ mat4 div(const mat4& matrix) {
+    __host__ __device__ mat4 div(const mat4& matrix) {
 
         mat4<T> result;
 
@@ -704,7 +702,7 @@ struct mat4 {
         return result;
     }
 
-    __gph__ mat4 product(const mat4& matrix) {
+    __host__ __device__ mat4 product(const mat4& matrix) {
 
         mat4<T> result;
 
@@ -731,7 +729,7 @@ struct mat4 {
         return result;
     }
 
-    __gph__ vec4<T> transform(const vec4<T>& v) {
+    __host__ __device__ vec4<T> transform(const vec4<T>& v) {
 
         vec4<T> result;
 
@@ -743,7 +741,7 @@ struct mat4 {
         return result;
     }
 
-    __gph__ T determinant() {
+    __host__ __device__ T determinant() {
 
         T det1 = row1.x * (row2.y * row3.z * row4.w - row2.y * row3.w * row4.z - row3.y * row2.z * row4.w + row3.y * row2.w * row4.z + row4.y * row2.z * row3.w - row4.y * row2.w * row3.z);
         T det2 = row1.y * (row2.x * row3.z * row4.w - row2.x * row3.w * row4.z - row3.x * row2.z * row4.w + row3.x * row2.w * row4.z + row4.x * row2.z * row3.w - row4.x * row2.w * row3.z);
@@ -753,7 +751,7 @@ struct mat4 {
         return det1 - det2 + det3 - det4;
     }
 
-    __gph__ mat4 inverse() {
+    __host__ __device__ mat4 inverse() {
 
         mat4<T> result;
 
@@ -795,7 +793,7 @@ struct mat4 {
         return result;
     }
 
-    __gph__ mat4 transpose() {
+    __host__ __device__ mat4 transpose() {
 
         mat4<T> result;
 
@@ -808,35 +806,35 @@ struct mat4 {
     }
 
     // Operators
-    __gph__ mat4 operator+(const mat4& matrix) const {
+    __host__ __device__ mat4 operator+(const mat4& matrix) const {
         return sum(matrix);
     }
 
-    __gph__ mat4 operator+(T value) const {
+    __host__ __device__ mat4 operator+(T value) const {
         return sum(mat4<T>::full(value));
     }
 
-    __gph__ mat4 operator-(const mat4& matrix) const {
+    __host__ __device__ mat4 operator-(const mat4& matrix) const {
         return subtract(matrix);
     }
 
-    __gph__ mat4 operator-(T value) const {
+    __host__ __device__ mat4 operator-(T value) const {
         return subtract(mat4<T>::full(value));
     }
 
-    __gph__ mat4 operator*(const mat4& matrix) const {
+    __host__ __device__ mat4 operator*(const mat4& matrix) const {
         return hadamard(matrix);
     }
 
-    __gph__ mat4 operator*(T value) const {
+    __host__ __device__ mat4 operator*(T value) const {
         return hadamard(mat4<T>::full(value));
     }
 
-    __gph__ mat4 operator/(const mat4& matrix) const {
+    __host__ __device__ mat4 operator/(const mat4& matrix) const {
         return div(matrix);
     }
 
-    __gph__ mat4 operator/(T value) const {
+    __host__ __device__ mat4 operator/(T value) const {
         return div(mat4<T>::full(value));
     }
 };

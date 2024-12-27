@@ -12,16 +12,16 @@ struct Triangle {
 
     vec3<T> v1, v2, v3;
 
-    __gph__ Triangle(const vec3<T>& _v1, const vec3<T>& _v2, const vec3<T>& _v3)
+    __host__ __device__ Triangle(const vec3<T>& _v1, const vec3<T>& _v2, const vec3<T>& _v3)
         : v1(_v1), v2(_v2), v3(_v3) {
     }
 
-    __gph__ Triangle() = default;
-    __gph__ ~Triangle() = default;
+    __host__ __device__ Triangle() = default;
+    __host__ __device__ ~Triangle() = default;
 };
 
 template <typename T>
-__gph__ vec3<T> barycentric(vec3<T> p, Triangle<T> triangle) {
+__host__ __device__ vec3<T> barycentric(vec3<T> p, Triangle<T> triangle) {
 
     T denom = (triangle.v2.y - triangle.v3.y) * (triangle.v1.x - triangle.v3.x) + (triangle.v3.x - triangle.v2.x) * (triangle.v1.y - triangle.v3.y);
     T alpha = (triangle.v2.y - triangle.v3.y) * (p.x - triangle.v3.x) + (triangle.v3.x - triangle.v2.x) * (p.y - triangle.v3.y);
@@ -45,30 +45,30 @@ struct Ray {
         T distance;
         bool hit;
 
-        __gph__ HitInfo(const vec3<T>& _intersection, const vec3<T>& _normal, 
+        __host__ __device__ HitInfo(const vec3<T>& _intersection, const vec3<T>& _normal, 
             T _distance, bool _hit) : intersection(_intersection), normal(_normal), 
             distance(_distance), hit(_hit) {
         }
 
-        __gph__ HitInfo() = default;
-        __gph__ ~HitInfo() = default;
+        __host__ __device__ HitInfo() = default;
+        __host__ __device__ ~HitInfo() = default;
     };
 
     vec3<T> origin;
     vec3<T> direction;
 
-    __gph__ Ray(const vec3<T>& _origin, const vec3<T>& _direction)
+    __host__ __device__ Ray(const vec3<T>& _origin, const vec3<T>& _direction)
         : origin(_origin), direction(_direction) {
     }
 
-    __gph__ Ray() = default;
-    __gph__ ~Ray() = default;
+    __host__ __device__ Ray() = default;
+    __host__ __device__ ~Ray() = default;
 
-    __gph__ vec3<T> evaluate(T lambda) {
+    __host__ __device__ vec3<T> evaluate(T lambda) {
         return origin + lambda * direction;
     }
 
-    __gph__ HitInfo intersects(const Triangle<T>& triangle) {
+    __host__ __device__ HitInfo intersects(const Triangle<T>& triangle) {
 
         HitInfo hitInfo;
         hitInfo.intersection = vec3<T>(0.0);
