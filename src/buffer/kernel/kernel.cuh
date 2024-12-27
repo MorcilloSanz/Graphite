@@ -84,18 +84,46 @@ __global__ void kernel(KernelFrameBuffer kernelFrameBuffer, KernelBuffer kernelV
 
     for(int i = 0; i < kernelIndexBuffer.count; i += 3) {
 
-        vec3<float> v1 = { vertexBuffer[(i + 0) * ATTRIBUTE_STRIDE + ATTRIBUTE_X], vertexBuffer[(i + 0) * ATTRIBUTE_STRIDE + ATTRIBUTE_Y], vertexBuffer[(i + 0) * ATTRIBUTE_STRIDE + ATTRIBUTE_Z] };
-        vec3<float> v2 = { vertexBuffer[(i + 1) * ATTRIBUTE_STRIDE + ATTRIBUTE_X], vertexBuffer[(i + 1) * ATTRIBUTE_STRIDE + ATTRIBUTE_Y], vertexBuffer[(i + 1) * ATTRIBUTE_STRIDE + ATTRIBUTE_Z] };
-        vec3<float> v3 = { vertexBuffer[(i + 2) * ATTRIBUTE_STRIDE + ATTRIBUTE_X], vertexBuffer[(i + 2) * ATTRIBUTE_STRIDE + ATTRIBUTE_Y], vertexBuffer[(i + 2) * ATTRIBUTE_STRIDE + ATTRIBUTE_Z] };
+        float x1 = vertexBuffer[indexBuffer[i + 0] * ATTRIBUTE_STRIDE + ATTRIBUTE_X];
+        float x2 = vertexBuffer[indexBuffer[i + 1] * ATTRIBUTE_STRIDE + ATTRIBUTE_X];
+        float x3 = vertexBuffer[indexBuffer[i + 2] * ATTRIBUTE_STRIDE + ATTRIBUTE_X];
+
+        float y1 = vertexBuffer[indexBuffer[i + 0] * ATTRIBUTE_STRIDE + ATTRIBUTE_Y];
+        float y2 = vertexBuffer[indexBuffer[i + 1] * ATTRIBUTE_STRIDE + ATTRIBUTE_Y];
+        float y3 = vertexBuffer[indexBuffer[i + 2] * ATTRIBUTE_STRIDE + ATTRIBUTE_Y];
+
+        float z1 = vertexBuffer[indexBuffer[i + 0] * ATTRIBUTE_STRIDE + ATTRIBUTE_Z];
+        float z2 = vertexBuffer[indexBuffer[i + 1] * ATTRIBUTE_STRIDE + ATTRIBUTE_Z];
+        float z3 = vertexBuffer[indexBuffer[i + 2] * ATTRIBUTE_STRIDE + ATTRIBUTE_Z];
+
+        vec3<float> v1 = { x1, y1, z1 };
+        vec3<float> v2 = { x2, y2, z2 };
+        vec3<float> v3 = { x3, y3, z3 };
 
         Triangle<float> triangle (v1, v2, v3);
+
+        float distance = INFINITY;
         Ray<float>::HitInfo hitInfo = ray.intersects(triangle);
 
-        if(hitInfo.hit) {
+        if(hitInfo.hit && hitInfo.distance < distance) {
 
-            vec3<float> c1 = { vertexBuffer[(i + 0) * ATTRIBUTE_STRIDE + ATTRIBUTE_R], vertexBuffer[(i + 0) * ATTRIBUTE_STRIDE + ATTRIBUTE_G], vertexBuffer[(i + 0) * ATTRIBUTE_STRIDE + ATTRIBUTE_B] };
-            vec3<float> c2 = { vertexBuffer[(i + 1) * ATTRIBUTE_STRIDE + ATTRIBUTE_R], vertexBuffer[(i + 1) * ATTRIBUTE_STRIDE + ATTRIBUTE_G], vertexBuffer[(i + 1) * ATTRIBUTE_STRIDE + ATTRIBUTE_B] };
-            vec3<float> c3 = { vertexBuffer[(i + 2) * ATTRIBUTE_STRIDE + ATTRIBUTE_R], vertexBuffer[(i + 2) * ATTRIBUTE_STRIDE + ATTRIBUTE_G], vertexBuffer[(i + 2) * ATTRIBUTE_STRIDE + ATTRIBUTE_B] };
+            distance = hitInfo.distance;
+
+            float r1 = vertexBuffer[indexBuffer[i + 0] * ATTRIBUTE_STRIDE + ATTRIBUTE_R];
+            float r2 = vertexBuffer[indexBuffer[i + 1] * ATTRIBUTE_STRIDE + ATTRIBUTE_R];
+            float r3 = vertexBuffer[indexBuffer[i + 2] * ATTRIBUTE_STRIDE + ATTRIBUTE_R];
+
+            float g1 = vertexBuffer[indexBuffer[i + 0] * ATTRIBUTE_STRIDE + ATTRIBUTE_G];
+            float g2 = vertexBuffer[indexBuffer[i + 1] * ATTRIBUTE_STRIDE + ATTRIBUTE_G];
+            float g3 = vertexBuffer[indexBuffer[i + 2] * ATTRIBUTE_STRIDE + ATTRIBUTE_G];
+
+            float b1 = vertexBuffer[indexBuffer[i + 0] * ATTRIBUTE_STRIDE + ATTRIBUTE_B];
+            float b2 = vertexBuffer[indexBuffer[i + 1] * ATTRIBUTE_STRIDE + ATTRIBUTE_B];
+            float b3 = vertexBuffer[indexBuffer[i + 2] * ATTRIBUTE_STRIDE + ATTRIBUTE_B];
+
+            vec3<float> c1 = { r1, g1, b1 };
+            vec3<float> c2 = { r2, g2, b2 };
+            vec3<float> c3 = { r3, g3, b3 };
 
             vec3<float> barycentricCoords = barycentric<float>(hitInfo.intersection, triangle);
             vec3<float> colorInterpolation = c1 * barycentricCoords.x + c2 * barycentricCoords.y + c3 * barycentricCoords.z;

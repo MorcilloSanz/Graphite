@@ -51,16 +51,17 @@ int main() {
     frameBuffer->bind();
 
     // Vertex Buffer. x y z r g b nx ny nz u v tanx tany tanz bitanx bitany bitanz
-    float data[18] = {
-         0.0f,  0.5f, -1.0f,  1.0f, 0.0f, 0.0f,
-         0.5f, -0.5f, -1.0f,  0.0f, 1.0f, 0.0f,
-        -0.5f, -0.5f, -1.0f,  0.0f, 0.0f, 1.0f
+    float vertices[] = {
+        0.0f,  0.5f, -1.0f,  1.0f, 0.0f, 0.0f,
+        0.5f, -0.5f, -1.0f,  0.0f, 1.0f, 0.0f,
+        -0.5f, -0.5f, -1.0f,  0.0f, 0.0f, 1.0f,
+        1.0f,  0.5f, -1.0f,  0.0f, 0.0f, 1.0f,
     };
     
-    Ptr<VertexBuffer> vertexBuffer = VertexBuffer::New(data, sizeof(data));
+    Ptr<VertexBuffer> vertexBuffer = VertexBuffer::New(vertices, sizeof(vertices));
     vertexBuffer->bind();
 
-    unsigned int indices[3] = { 0, 1, 2 };
+    unsigned int indices[] = { 0, 1, 2, 0, 3, 1 };
     Ptr<IndexBuffer> indexBuffer = IndexBuffer::New(indices, sizeof(indices));
     indexBuffer->bind();
 
