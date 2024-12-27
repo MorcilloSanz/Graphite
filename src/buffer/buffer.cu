@@ -1,6 +1,6 @@
 #include "buffer.cuh"
 
-#include "kernel/kernel.cuh"
+#include "kernel/fragment.cuh"
 
 namespace gph
 {
@@ -40,7 +40,7 @@ void draw() {
         }
 
         KernelBuffer kernelVertexBuffer(vertexBuffer, vertexBufferSize / sizeof(float));
-            
+
         // Index Buffer
         size_t indexBufferSize = 0;
         void* indexBuffer = nullptr;
@@ -61,7 +61,7 @@ void draw() {
         dim3 blocksPerGrid((width + threadsPerBlock.x - 1) / threadsPerBlock.x,
                         (height + threadsPerBlock.y - 1) / threadsPerBlock.y);
 
-        kernel<<<blocksPerGrid, threadsPerBlock>>>(kernelFrameBuffer, kernelVertexBuffer, kernelIndexBuffer);
+        kernel_fragment<<<blocksPerGrid, threadsPerBlock>>>(kernelFrameBuffer, kernelVertexBuffer, kernelIndexBuffer);
         cudaDeviceSynchronize();
     }
 }

@@ -49,7 +49,10 @@ set(CXX_HEADERS
 
 set(CUDA_HEADERS
     src/buffer/buffer.cuh
-    src/buffer/kernel/kernel.cuh
+    src/buffer/kernel/kernelbuffer.cuh
+    src/buffer/kernel/attributes.cuh
+    src/buffer/kernel/fragment.cuh
+    src/buffer/kernel/vertex.cuh
     src/math/linalg.cuh
     src/math/geometry.cuh
 )

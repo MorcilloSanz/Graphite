@@ -48,24 +48,39 @@ int main() {
     std::cout << "Frame Buffer Mem (GPU): " << static_cast<float>(framebufferMem) / (1024 * 1024) << "MB" << std::endl;
 
     Ptr<FrameBuffer> frameBuffer = FrameBuffer::New(width, height);
-    frameBuffer->bind();
-
-    // Vertex Buffer. x y z r g b nx ny nz u v tanx tany tanz bitanx bitany bitanz
-    float vertices[] = {
-        0.0f,  0.5f, -1.0f,  1.0f, 0.0f, 0.0f,
-        0.5f, -0.5f, -1.0f,  0.0f, 1.0f, 0.0f,
-        -0.5f, -0.5f, -1.0f,  0.0f, 0.0f, 1.0f,
-        1.0f,  0.5f, -1.0f,  0.0f, 0.0f, 1.0f,
-    };
     
+    // Vertex Buffer: x y z r g b
+    float vertices[] = {
+        // Front square
+        -0.5, -0.5,  0.5,  0.0f, 0.0f, 1.0f,
+         0.5, -0.5,  0.5,  1.0f, 0.0f, 1.0f,
+         0.5,  0.5,  0.5,  0.0f, 1.0f, 1.0f,
+        -0.5,  0.5,  0.5,  0.0f, 1.0f, 0.5f,
+        // Back square
+        -0.5, -0.5, -0.5,  0.0f, 0.0f, 1.0f,
+         0.5, -0.5, -0.5,  1.0f, 0.0f, 1.0f,
+         0.5,  0.5, -0.5,  0.0f, 1.0f, 1.0f,
+        -0.5,  0.5, -0.5,  0.0f, 1.0f, 0.5f
+    };
+
     Ptr<VertexBuffer> vertexBuffer = VertexBuffer::New(vertices, sizeof(vertices));
-    vertexBuffer->bind();
 
-    unsigned int indices[] = { 0, 1, 2, 0, 3, 1 };
+    // Index buffer
+    unsigned int indices[] = { 
+        //front   //right   //back
+        0, 1, 2,  1, 5, 6,  7, 6, 5,
+        2, 3, 0,  6, 2, 1,  5, 4, 7,
+        //left    //bottom  //top
+        4, 0, 3,  4, 5, 1,  3, 2, 6,
+        3, 7, 4,  1, 0, 4,  6, 7, 3 
+    };
+
     Ptr<IndexBuffer> indexBuffer = IndexBuffer::New(indices, sizeof(indices));
-    indexBuffer->bind();
-
+    
     // Draw call
+    frameBuffer->bind();
+    vertexBuffer->bind();
+    indexBuffer->bind();
     draw();
 
     // CPU
