@@ -81,6 +81,8 @@ __global__ void kernel(KernelFrameBuffer kernelFrameBuffer, KernelBuffer kernelV
     unsigned int* indexBuffer = (unsigned int*) kernelIndexBuffer.buffer;
 
     Ray<float> ray = castRay<float>(x, y, kernelFrameBuffer.width, kernelFrameBuffer.height);
+    float distance = INFINITY;
+    bool missed = true;
 
     for(int i = 0; i < kernelIndexBuffer.count; i += 3) {
 
@@ -101,12 +103,11 @@ __global__ void kernel(KernelFrameBuffer kernelFrameBuffer, KernelBuffer kernelV
         vec3<float> v3 = { x3, y3, z3 };
 
         Triangle<float> triangle (v1, v2, v3);
-
-        float distance = INFINITY;
         Ray<float>::HitInfo hitInfo = ray.intersects(triangle);
 
         if(hitInfo.hit && hitInfo.distance < distance) {
 
+            missed = false;
             distance = hitInfo.distance;
 
             float r1 = vertexBuffer[indexBuffer[i + 0] * ATTRIBUTE_STRIDE + ATTRIBUTE_R];
@@ -135,9 +136,12 @@ __global__ void kernel(KernelFrameBuffer kernelFrameBuffer, KernelBuffer kernelV
             };
 
             setPixel(kernelFrameBuffer, x, y, pixelColor);
-        }else {
-            setPixel(kernelFrameBuffer, x, y, vec3<unsigned char>(0, 0, 0));
         }
+    }
+
+    // Miss function
+    if(missed) {
+        setPixel(kernelFrameBuffer, x, y, vec3<unsigned char>(0, 0, 0));
     }
 
 }
