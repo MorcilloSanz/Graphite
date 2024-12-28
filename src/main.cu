@@ -11,6 +11,7 @@
 
 #include "buffer/buffer.cuh"
 #include "math/linalg.cuh"
+#include "math/transform.cuh"
 
 using namespace gph;
 
@@ -65,10 +66,8 @@ int main() {
 
     Ptr<VertexBuffer> vertexBuffer = VertexBuffer::New(vertices, sizeof(vertices));
 
-    mat4<float> scale(0.5f);
-    scale.row4.w = 1;
-
-    vertexBuffer->setModelMatrix(scale);
+    mat4<float> model = translation<float>(vec3<float>(0.25f));
+    vertexBuffer->setModelMatrix(model);
 
     // Index buffer
     unsigned int indices[] = { 

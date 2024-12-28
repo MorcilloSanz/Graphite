@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+#include <cuda_runtime.h>
+
 namespace gph
 {
 
