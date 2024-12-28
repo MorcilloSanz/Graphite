@@ -65,6 +65,11 @@ int main() {
 
     Ptr<VertexBuffer> vertexBuffer = VertexBuffer::New(vertices, sizeof(vertices));
 
+    mat4<float> scale(0.5f);
+    scale.row4.w = 1;
+
+    vertexBuffer->setModelMatrix(scale);
+
     // Index buffer
     unsigned int indices[] = { 
         //front   //right   //back

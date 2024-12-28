@@ -62,13 +62,16 @@ __global__ void kernel_fragment(KernelFrameBuffer kernelFrameBuffer, KernelBuffe
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
 
+    // Buffers
     float* vertexBuffer = (float*) kernelVertexBuffer.buffer;
     unsigned int* indexBuffer = (unsigned int*) kernelIndexBuffer.buffer;
 
+    // Ray casting
     Ray<float> ray = castRay<float>(x, y, kernelFrameBuffer.width, kernelFrameBuffer.height);
     float distance = INFINITY;
     bool missed = true;
 
+    // Ray intersections
     for(int i = 0; i < kernelIndexBuffer.count; i += 3) {
 
         vec3<float> X = getAttributes(vertexBuffer, indexBuffer, i, ATTRIBUTE_X); // v1x v2x v3x

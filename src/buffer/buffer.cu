@@ -1,6 +1,7 @@
 #include "buffer.cuh"
 
 #include "kernel/fragment.cuh"
+#include "kernel/vertex.cuh"
 
 namespace gph
 {
@@ -32,11 +33,13 @@ void draw() {
         // Kernel Vertex Buffer
         size_t vertexBufferSize = 0;
         void* vertexBuffer = nullptr;
+        mat4<float> modelMatrix(1.0f);
 
         if(bufferRegister->getBindedVertexBufferID() > 0) {
             Ptr<VertexBuffer> bindedVertexBuffer = bufferRegister->getBindedVertexBuffer();
             vertexBuffer = bindedVertexBuffer->getBuffer();
             vertexBufferSize = bindedVertexBuffer->getSize();
+            modelMatrix = bindedVertexBuffer->getModelMatrix();
         }
 
         KernelBuffer kernelVertexBuffer(vertexBuffer, vertexBufferSize / sizeof(float));
@@ -54,7 +57,13 @@ void draw() {
         KernelBuffer kernelIndexBuffer(indexBuffer, indexBufferSize / sizeof(unsigned int));
 
         // Vertex kernel -> transform each vertex
+        mat4<float> viewMatrix(1.0f);
+        mat4<float> modelViewMatrix = viewMatrix * modelMatrix;
 
+        int threadsPerBlockVertex = 256;
+        int numBlocksVertex = (kernelIndexBuffer.count + threadsPerBlockVertex - 1) / threadsPerBlockVertex;
+
+        kernel_vertex<<<numBlocksVertex, threadsPerBlockVertex>>>(kernelVertexBuffer, kernelIndexBuffer, modelViewMatrix);
   
         // Fragment kernel -> compute each fragment
         dim3 threadsPerBlock(16, 16);
@@ -242,23 +251,24 @@ void FrameBuffer::unbind() {
 //------------------//
 
 VertexBuffer::VertexBuffer(unsigned int id, float* data, size_t size) 
-    : Buffer(id, size) {
+    : Buffer(id, size), modelMatrix(1.0f) {
     cudaMemcpy(buffer, data, size, cudaMemcpyHostToDevice);
     check_cuda_error("VertexBuffer::VertexBuffer cudaMemcpy");
 }
 
 VertexBuffer::VertexBuffer(const VertexBuffer& vertexBuffer) 
-    : Buffer(vertexBuffer) {
+    : Buffer(vertexBuffer), modelMatrix(vertexBuffer.modelMatrix) {
 }
 
 VertexBuffer::VertexBuffer(VertexBuffer&& vertexBuffer) noexcept 
-    : Buffer(std::move(vertexBuffer)) {
+    : Buffer(std::move(vertexBuffer)), modelMatrix(std::move(vertexBuffer.modelMatrix)) {
 }
 
 VertexBuffer& VertexBuffer::operator=(const VertexBuffer& vertexBuffer) {
 
     if(this != &vertexBuffer) {
         Buffer::operator=(vertexBuffer);
+        modelMatrix = vertexBuffer.modelMatrix;
     }
 
     return *this;
@@ -268,6 +278,7 @@ VertexBuffer& VertexBuffer::operator=(VertexBuffer&& vertexBuffer) noexcept {
 
     if(this != &vertexBuffer) {
         Buffer::operator=(std::move(vertexBuffer));
+        modelMatrix = std::move(vertexBuffer.modelMatrix);
     }
 
     return *this;

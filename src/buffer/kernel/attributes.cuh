@@ -14,6 +14,18 @@ namespace gph
 {
 
 /**
+ * Retrieves a specific attribute index from a vertex in the vertex buffer.
+ *
+ * @param indexBuffer Pointer to the index buffer mapping vertices.
+ * @param i Index of the vertex in the index buffer.
+ * @param attribute Offset of the desired attribute within the vertex data.
+ * @return The value of the specified attribute for the given vertex.
+ */
+__device__ unsigned int getAttributeIndex(unsigned int* indexBuffer, int i, int attribute) {
+    return indexBuffer[i] * ATTRIBUTE_STRIDE + attribute;
+}
+
+/**
  * Retrieves a specific attribute from a vertex in the vertex buffer.
  *
  * @param vertexBuffer Pointer to the vertex buffer containing vertex data.
@@ -23,7 +35,7 @@ namespace gph
  * @return The value of the specified attribute for the given vertex.
  */
 __device__ float getAttribute(float* vertexBuffer, unsigned int* indexBuffer, int i, int attribute) {
-    return vertexBuffer[indexBuffer[i] * ATTRIBUTE_STRIDE + attribute];
+    return vertexBuffer[getAttributeIndex(indexBuffer, i, attribute)];
 }
 
 /**

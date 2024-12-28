@@ -654,7 +654,7 @@ struct mat4 {
     }
 
     // Operations
-    __host__ __device__ mat4 sum(const mat4& matrix) {
+    __host__ __device__ mat4 sum(const mat4& matrix) const {
 
         mat4<T> result;
 
@@ -666,7 +666,7 @@ struct mat4 {
         return result;
     }
 
-    __host__ __device__ mat4 subtract(const mat4& matrix) {
+    __host__ __device__ mat4 subtract(const mat4& matrix) const {
 
         mat4<T> result;
 
@@ -678,7 +678,7 @@ struct mat4 {
         return result;
     }
 
-    __host__ __device__ mat4 hadamard(const mat4& matrix) {
+    __host__ __device__ mat4 hadamard(const mat4& matrix) const {
 
         mat4<T> result;
 
@@ -690,7 +690,7 @@ struct mat4 {
         return result;
     }
 
-    __host__ __device__ mat4 div(const mat4& matrix) {
+    __host__ __device__ mat4 div(const mat4& matrix) const {
 
         mat4<T> result;
 
@@ -702,7 +702,7 @@ struct mat4 {
         return result;
     }
 
-    __host__ __device__ mat4 product(const mat4& matrix) {
+    __host__ __device__ mat4 product(const mat4& matrix) const {
 
         mat4<T> result;
 
@@ -729,7 +729,7 @@ struct mat4 {
         return result;
     }
 
-    __host__ __device__ vec4<T> transform(const vec4<T>& v) {
+    __host__ __device__ vec4<T> transform(const vec4<T>& v) const {
 
         vec4<T> result;
 
@@ -823,7 +823,7 @@ struct mat4 {
     }
 
     __host__ __device__ mat4 operator*(const mat4& matrix) const {
-        return hadamard(matrix);
+        return product(matrix);
     }
 
     __host__ __device__ mat4 operator*(T value) const {

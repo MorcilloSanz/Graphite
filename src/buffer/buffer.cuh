@@ -8,6 +8,8 @@
 
 #include <cuda_runtime.h>
 
+#include "math/linalg.cuh"
+
 namespace gph
 {
 
@@ -135,6 +137,8 @@ public:
 //------------------//
 
 class VertexBuffer : public Buffer {
+private:
+    mat4<float> modelMatrix;
 public:
     VertexBuffer(unsigned int id, float* data, size_t size);
     VertexBuffer() = default;
@@ -151,6 +155,9 @@ public:
 public:
     void bind() override;
     void unbind() override;
+public:
+    inline void setModelMatrix(const mat4<float>& modelMatrix) { this->modelMatrix = modelMatrix; }
+    inline const mat4<float>& getModelMatrix() { return modelMatrix; }
 };
 
 //-----------------//
