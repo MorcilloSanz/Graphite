@@ -27,13 +27,16 @@ __global__ void kernel_vertex(KernelBuffer kernelVertexBuffer, KernelBuffer kern
         1.0f
     };
 
-    vec4<float> transformed = modelview.transform(vertex);
+    vec4<float> transformed = modelview * vertex;
 
     // update vertex buffer
-    unsigned int attributeIndex = getAttributeIndex(indexBuffer, idx, ATTRIBUTE_X);
-    vertexBuffer[attributeIndex    ] = transformed.x;
-    vertexBuffer[attributeIndex + 1] = transformed.y;
-    vertexBuffer[attributeIndex + 2] = transformed.z;
+    unsigned int attributeIndexX = getAttributeIndex(indexBuffer, idx, ATTRIBUTE_X);
+    unsigned int attributeIndexY = getAttributeIndex(indexBuffer, idx, ATTRIBUTE_Y);
+    unsigned int attributeIndexZ = getAttributeIndex(indexBuffer, idx, ATTRIBUTE_Z);
+
+    vertexBuffer[attributeIndexX] = transformed.x;
+    vertexBuffer[attributeIndexY] = transformed.y;
+    vertexBuffer[attributeIndexZ] = transformed.z;
 }
 
 }

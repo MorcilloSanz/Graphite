@@ -62,6 +62,10 @@ __global__ void kernel_fragment(KernelFrameBuffer kernelFrameBuffer, KernelBuffe
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
 
+    if (x >= kernelFrameBuffer.width || y >= kernelFrameBuffer.height) {
+        return;
+    }
+
     // Buffers
     float* vertexBuffer = (float*) kernelVertexBuffer.buffer;
     unsigned int* indexBuffer = (unsigned int*) kernelIndexBuffer.buffer;

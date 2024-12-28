@@ -4,6 +4,10 @@
 
 #include <cuda_runtime.h>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846264338327950288
+#endif
+
 namespace gph
 {
 
@@ -826,6 +830,10 @@ struct mat4 {
 
     __host__ __device__ mat4 operator*(const mat4& matrix) const {
         return product(matrix);
+    }
+
+    __host__ __device__ vec4<T> operator*(const vec4<T>& vec) const {
+        return transform(vec);
     }
 
     __host__ __device__ mat4 operator*(T value) const {

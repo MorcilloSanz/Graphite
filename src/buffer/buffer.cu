@@ -64,6 +64,7 @@ void draw() {
         int numBlocksVertex = (kernelIndexBuffer.count + threadsPerBlockVertex - 1) / threadsPerBlockVertex;
 
         kernel_vertex<<<numBlocksVertex, threadsPerBlockVertex>>>(kernelVertexBuffer, kernelIndexBuffer, modelViewMatrix);
+        cudaDeviceSynchronize();
   
         // Fragment kernel -> compute each fragment
         dim3 threadsPerBlock(16, 16);
@@ -72,6 +73,17 @@ void draw() {
 
         kernel_fragment<<<blocksPerGrid, threadsPerBlock>>>(kernelFrameBuffer, kernelVertexBuffer, kernelIndexBuffer);
         cudaDeviceSynchronize();
+    }
+}
+
+void clear() {
+
+    BufferRegister* bufferRegister = BufferRegister::getInstance();
+
+    if(bufferRegister->getBindedFrameBufferID() > 0) {
+
+        Ptr<FrameBuffer> bindedFrameBuffer = bufferRegister->getBindedFrameBuffer();
+        bindedFrameBuffer->clear();
     }
 }
 
@@ -244,6 +256,10 @@ void FrameBuffer::bind() {
 void FrameBuffer::unbind() {
     BufferRegister* bufferRegister = BufferRegister::getInstance();
     bufferRegister->bindFbo(0);
+}
+
+void FrameBuffer::clear() {
+    cudaMemset(buffer, 0, size);
 }
 
 //------------------//

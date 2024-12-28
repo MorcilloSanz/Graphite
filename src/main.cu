@@ -66,7 +66,7 @@ int main() {
 
     Ptr<VertexBuffer> vertexBuffer = VertexBuffer::New(vertices, sizeof(vertices));
 
-    mat4<float> model = translation<float>(vec3<float>(0.25f));
+    mat4<float> model = rotationX<float>(M_PI / 3) * rotationY<float>(M_PI / 4) * scale<float>(vec3<float>(1.25f));
     vertexBuffer->setModelMatrix(model);
 
     // Index buffer
@@ -85,6 +85,8 @@ int main() {
     frameBuffer->bind();
     vertexBuffer->bind();
     indexBuffer->bind();
+
+    clear();
     draw();
 
     // CPU

@@ -7,6 +7,7 @@ namespace gph
 
 template <typename T>
 __host__ __device__ static mat4<T> rotationX(T angle) {
+    
     T c = cos(angle);
     T s = sin(angle);
 
@@ -21,6 +22,7 @@ __host__ __device__ static mat4<T> rotationX(T angle) {
 
 template <typename T>
 __host__ __device__ static mat4<T> rotationY(T angle) {
+
     T c = cos(angle);
     T s = sin(angle);
 
@@ -35,6 +37,7 @@ __host__ __device__ static mat4<T> rotationY(T angle) {
 
 template <typename T>
 __host__ __device__ static mat4<T> rotationZ(T angle) {
+
     T c = cos(angle);
     T s = sin(angle);
 

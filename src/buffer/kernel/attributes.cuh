@@ -51,7 +51,7 @@ __device__ vec3<float> getAttributes(float* vertexBuffer, unsigned int* indexBuf
     return {
         getAttribute(vertexBuffer, indexBuffer, i + 0, attribute),
         getAttribute(vertexBuffer, indexBuffer, i + 1, attribute),
-        getAttribute(vertexBuffer, indexBuffer, i + 2, attribute),
+        getAttribute(vertexBuffer, indexBuffer, i + 2, attribute)
     };
 }
 

@@ -19,6 +19,7 @@ using Ptr = std::shared_ptr<T>;
 void initGraphite();
 void destroyGraphite();
 void draw();
+void clear();
 
 class FrameBuffer;
 class VertexBuffer;
@@ -127,6 +128,7 @@ public:
 public:
    void bind() override;
    void unbind() override;
+   void clear();
 public:
     inline unsigned int getWidth() const { return width; }
     inline unsigned int getHeight() const { return height; }
