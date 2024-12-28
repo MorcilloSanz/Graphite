@@ -52,12 +52,10 @@ int main() {
     
     // Vertex Buffer: x y z r g b
     float vertices[] = {
-        // Front square
         -0.5, -0.5,  0.5,  0.0f, 0.0f, 1.0f,
          0.5, -0.5,  0.5,  1.0f, 0.0f, 1.0f,
          0.5,  0.5,  0.5,  0.0f, 1.0f, 1.0f,
         -0.5,  0.5,  0.5,  0.0f, 1.0f, 0.5f,
-        // Back square
         -0.5, -0.5, -0.5,  0.0f, 0.0f, 1.0f,
          0.5, -0.5, -0.5,  1.0f, 0.0f, 1.0f,
          0.5,  0.5, -0.5,  0.0f, 1.0f, 1.0f,
@@ -66,15 +64,13 @@ int main() {
 
     Ptr<VertexBuffer> vertexBuffer = VertexBuffer::New(vertices, sizeof(vertices));
 
-    mat4<float> model = rotationX<float>(M_PI / 3) * rotationY<float>(M_PI / 4) * scale<float>(vec3<float>(1.25f));
+    mat4<float> model = rotationZ<float>(M_PI / 3) * rotationX<float>(M_PI / 3) * rotationY<float>(M_PI / 4) * scale<float>(vec3<float>(0.25f)) * translation<float>(vec3<float>(0.0, 0.0, -3.0f));
     vertexBuffer->setModelMatrix(model);
 
     // Index buffer
     unsigned int indices[] = { 
-        //front   //right   //back
         0, 1, 2,  1, 5, 6,  7, 6, 5,
         2, 3, 0,  6, 2, 1,  5, 4, 7,
-        //left    //bottom  //top
         4, 0, 3,  4, 5, 1,  3, 2, 6,
         3, 7, 4,  1, 0, 4,  6, 7, 3 
     };
