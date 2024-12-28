@@ -1,12 +1,10 @@
 #pragma once
 
-/*
 #include "math/linalg.cuh"
 #include "math/geometry.cuh"
 
 #include "kernelbuffer.cuh"
 #include "attributes.cuh"
-*/
 
 namespace gph
 {
