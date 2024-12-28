@@ -6,19 +6,39 @@
 namespace gph
 {
 
-//----------------//
-//    Graphite    //
-//----------------//
+//------------------//
+//  BufferRegister  //
+//------------------//
 
-void initGraphite() {
+BufferRegister* BufferRegister::getInstance() {
+    if(instance == nullptr)
+        instance = new BufferRegister();
+
+    return instance;
+}
+
+void BufferRegister::destroyInstance() {
+    if (instance != nullptr) {
+        delete instance;
+        instance = nullptr;
+    }
+}
+
+BufferRegister* BufferRegister::instance = nullptr;
+
+//-----------------//
+//     Renderer    //
+//-----------------//
+
+void Renderer::init() {
     BufferRegister* bufferRegister = BufferRegister::getInstance();
 }
 
-void destroyGraphite() {
+void Renderer::destroy() {
     BufferRegister::destroyInstance();
 }
 
-void draw() {
+void Renderer::draw() {
 
     BufferRegister* bufferRegister = BufferRegister::getInstance();
     if(bufferRegister->getBindedFrameBufferID() > 0) {
@@ -76,7 +96,7 @@ void draw() {
     }
 }
 
-void clear() {
+void Renderer::clear() {
 
     BufferRegister* bufferRegister = BufferRegister::getInstance();
 
@@ -87,25 +107,6 @@ void clear() {
     }
 }
 
-//------------------//
-//  BufferRegister  //
-//------------------//
-
-BufferRegister* BufferRegister::getInstance() {
-    if(instance == nullptr)
-        instance = new BufferRegister();
-
-    return instance;
-}
-
-void BufferRegister::destroyInstance() {
-    if (instance != nullptr) {
-        delete instance;
-        instance = nullptr;
-    }
-}
-
-BufferRegister* BufferRegister::instance = nullptr;
 
 //-------------//
 //   Buffer    //

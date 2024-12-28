@@ -16,11 +16,6 @@ namespace gph
 template <typename T>
 using Ptr = std::shared_ptr<T>;
 
-void initGraphite();
-void destroyGraphite();
-void draw();
-void clear();
-
 class FrameBuffer;
 class VertexBuffer;
 class IndexBuffer;
@@ -73,6 +68,18 @@ public:
     inline void bindFbo(int fboID) { this->fboID = fboID; }
     inline void bindVbo(int vboID) { this->vboID = vboID; }
     inline void bindIbo(int iboID) { this->iboID = iboID; }
+};
+
+//-----------------//
+//     Renderer    //
+//-----------------//
+
+class Renderer {
+public:
+    static void init();
+    static void destroy();
+    static void draw();
+    static void clear();
 };
 
 //-------------//

@@ -38,8 +38,8 @@ int main() {
     std::cout << "Free Memory (GPU): " << freeMem / (1024 * 1024) << " MB" << std::endl;
     std::cout << "Total Memory (GPU): " << totalMem / (1024 * 1024) << " MB" << std::endl;
 
-    // Graphite
-    initGraphite();
+    // Renderer
+    Renderer::init();
 
     // Frame buffer
     constexpr unsigned int width = 1080;
@@ -82,23 +82,21 @@ int main() {
     Ptr<IndexBuffer> indexBuffer = IndexBuffer::New(indices, sizeof(indices));
     
     // Draw call
+    Renderer::clear();
+
     frameBuffer->bind();
     vertexBuffer->bind();
     indexBuffer->bind();
+    Renderer::draw();
 
-    clear();
-    draw();
-
-    // CPU
+    // CPU image
     uint8_t* bufferCPU = new uint8_t[frameBuffer->getSize()];
     cudaMemcpy(bufferCPU, frameBuffer->getBuffer(), frameBuffer->getSize(), cudaMemcpyDeviceToHost);
-    
     stbi_write_png("output.png", width, height, STBI_rgb, bufferCPU, width * STBI_rgb);
-    
     delete[] bufferCPU;
 
     // Destroy
-    destroyGraphite();
+    Renderer::destroy();
 
     return 0;
 }
