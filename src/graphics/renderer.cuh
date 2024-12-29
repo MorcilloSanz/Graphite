@@ -22,21 +22,30 @@ struct Uniforms {
     ~Uniforms() = default;
 };
 
+class KernelBuffer;
+class KernelFrameBuffer;
+
 class Renderer {
 private:
     Uniforms<float> uniforms;
 public:
     Renderer() = default;
     ~Renderer() = default;
-public:
-    inline void setUniforms(const Uniforms<float>& uniforms) {
-        this->uniforms = uniforms;
-    }
+private:
+    KernelBuffer getKernelVertexBuffer();
+    KernelBuffer getKernelIndexBuffer();
+
+    void vertexShader(const KernelBuffer& kernelVertexBuffer, const KernelBuffer& kernelIndexBuffer);
+    void fragmentShader(const KernelFrameBuffer& kernelFrameBuffer, const KernelBuffer& kernelVertexBuffer, 
+        const KernelBuffer& kernelIndexBuffer);
 public:
     void init();
     void destroy();
     void draw();
     void clear();
+public:
+    inline void setUniforms(const Uniforms<float>& uniforms) { this->uniforms = uniforms; }
+    inline const Uniforms<float>& getUniforms() { return uniforms; }
 };
 
 }

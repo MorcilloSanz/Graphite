@@ -64,7 +64,7 @@ int main() {
     renderer.clear();
 
     mat4<float> model = rotationX<float>(M_PI / 5) * rotationY<float>(M_PI / 5) * scale<float>(vec3<float>(0.5f));
-    mat4<float> view = translation<float>(vec3<float>(-0.25f, 0.0f, 0.0f));
+    mat4<float> view = translation<float>(vec3<float>(0.25f, 0.25f, 0.0f));
 
     Uniforms uniforms(model, view);
     renderer.setUniforms(uniforms);

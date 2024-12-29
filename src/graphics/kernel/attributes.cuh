@@ -9,7 +9,6 @@
 
 #define ATTRIBUTE_STRIDE 6
 
-
 namespace gph 
 {
 
