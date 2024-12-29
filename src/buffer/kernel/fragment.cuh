@@ -28,10 +28,12 @@ namespace gph
 template <typename T>
 __device__ Ray<T> castRay(int x, int y, unsigned int width, unsigned int height) {
 
+    float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
+
     vec3<float> origin = {
-        2.0 * x / width - 1.0, 
-        2.0 * y / height - 1.0, 
-        0.01f 
+        (2.0f * x / width - 1.0f) * aspectRatio, // Escalar x por el aspect ratio
+        1.0f - 2.0f * y / height,                 // Invertir y para que vaya de arriba a abajo
+        1.f 
     };
 
     vec3<float> direction = { 0.0f, 0.0f, -1.0f };
