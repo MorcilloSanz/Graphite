@@ -9,7 +9,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <vendor/stb_image_write.h>
 
-#include "buffer/buffer.cuh"
+#include "graphics/buffer.cuh"
 #include "math/linalg.cuh"
 #include "math/transform.cuh"
 
@@ -39,7 +39,8 @@ int main() {
     std::cout << "Total Memory (GPU): " << totalMem / (1024 * 1024) << " MB" << std::endl;
 
     // Renderer
-    Renderer::init();
+    Renderer renderer;
+    renderer.init();
 
     // Frame buffer
     constexpr unsigned int width = 1080;
@@ -64,9 +65,6 @@ int main() {
 
     Ptr<VertexBuffer> vertexBuffer = VertexBuffer::New(vertices, sizeof(vertices));
 
-    mat4<float> model = rotationX<float>(M_PI / 5) * rotationY<float>(M_PI / 5) * scale<float>(vec3<float>(0.5f));
-    vertexBuffer->setModelMatrix(model);
-
     // Index buffer
     unsigned int indices[] = { 
         0, 1, 2,  1, 5, 6,  7, 6, 5,
@@ -78,12 +76,18 @@ int main() {
     Ptr<IndexBuffer> indexBuffer = IndexBuffer::New(indices, sizeof(indices));
     
     // Draw call
-    Renderer::clear();
+    renderer.clear();
+
+    mat4<float> model = rotationX<float>(M_PI / 5) * rotationY<float>(M_PI / 5) * scale<float>(vec3<float>(0.5f));
+    mat4<float> view = translation<float>(vec3<float>(-0.25f, 0.0f, 0.0f));
+    
+    Uniforms uniforms(model, view);
+    renderer.setUniforms(uniforms);
 
     frameBuffer->bind();
     vertexBuffer->bind();
     indexBuffer->bind();
-    Renderer::draw();
+    renderer.draw();
 
     // CPU image
     uint8_t* bufferCPU = new uint8_t[frameBuffer->getSize()];
@@ -92,7 +96,7 @@ int main() {
     delete[] bufferCPU;
 
     // Destroy
-    Renderer::destroy();
+    renderer.destroy();
 
     return 0;
 }

@@ -74,12 +74,38 @@ public:
 //     Renderer    //
 //-----------------//
 
+template <typename T>
+struct Uniforms {
+
+    mat4<T> modelMatrix;
+    mat4<T> viewMatrix;
+
+    Uniforms(const mat4<T>& _modelMatrix, const mat4<T>& _viewMatrix)
+        : modelMatrix(_modelMatrix), viewMatrix(_viewMatrix) {
+    }
+
+    Uniforms()
+        : modelMatrix(mat4<T>(1.0)), viewMatrix(mat4<T>(1.0)) {
+    }
+
+    ~Uniforms() = default;
+};
+
 class Renderer {
+private:
+    Uniforms<float> uniforms;
 public:
-    static void init();
-    static void destroy();
-    static void draw();
-    static void clear();
+    Renderer() = default;
+    ~Renderer() = default;
+public:
+    inline void setUniforms(const Uniforms<float>& uniforms) {
+        this->uniforms = uniforms;
+    }
+public:
+    void init();
+    void destroy();
+    void draw();
+    void clear();
 };
 
 //-------------//
@@ -146,8 +172,6 @@ public:
 //------------------//
 
 class VertexBuffer : public Buffer {
-private:
-    mat4<float> modelMatrix;
 public:
     VertexBuffer(unsigned int id, float* data, size_t size);
     VertexBuffer() = default;
@@ -164,9 +188,6 @@ public:
 public:
     void bind() override;
     void unbind() override;
-public:
-    inline void setModelMatrix(const mat4<float>& modelMatrix) { this->modelMatrix = modelMatrix; }
-    inline const mat4<float>& getModelMatrix() { return modelMatrix; }
 };
 
 //-----------------//

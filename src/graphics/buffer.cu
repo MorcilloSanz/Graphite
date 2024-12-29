@@ -53,13 +53,11 @@ void Renderer::draw() {
         // Kernel Vertex Buffer
         size_t vertexBufferSize = 0;
         void* vertexBuffer = nullptr;
-        mat4<float> modelMatrix(1.0f);
 
         if(bufferRegister->getBindedVertexBufferID() > 0) {
             Ptr<VertexBuffer> bindedVertexBuffer = bufferRegister->getBindedVertexBuffer();
             vertexBuffer = bindedVertexBuffer->getBuffer();
             vertexBufferSize = bindedVertexBuffer->getSize();
-            modelMatrix = bindedVertexBuffer->getModelMatrix();
         }
 
         KernelBuffer kernelVertexBuffer(vertexBuffer, vertexBufferSize / sizeof(float));
@@ -77,8 +75,7 @@ void Renderer::draw() {
         KernelBuffer kernelIndexBuffer(indexBuffer, indexBufferSize / sizeof(unsigned int));
 
         // Vertex kernel -> transform each vertex
-        mat4<float> viewMatrix(1.0f);
-        mat4<float> modelViewMatrix = viewMatrix * modelMatrix;
+        mat4<float> modelViewMatrix = uniforms.viewMatrix * uniforms.modelMatrix;
 
         int threadsPerBlockVertex = 256;
         int numBlocksVertex = (kernelIndexBuffer.count + threadsPerBlockVertex - 1) / threadsPerBlockVertex;
@@ -268,24 +265,23 @@ void FrameBuffer::clear() {
 //------------------//
 
 VertexBuffer::VertexBuffer(unsigned int id, float* data, size_t size) 
-    : Buffer(id, size), modelMatrix(1.0f) {
+    : Buffer(id, size) {
     cudaMemcpy(buffer, data, size, cudaMemcpyHostToDevice);
     check_cuda_error("VertexBuffer::VertexBuffer cudaMemcpy");
 }
 
 VertexBuffer::VertexBuffer(const VertexBuffer& vertexBuffer) 
-    : Buffer(vertexBuffer), modelMatrix(vertexBuffer.modelMatrix) {
+    : Buffer(vertexBuffer) {
 }
 
 VertexBuffer::VertexBuffer(VertexBuffer&& vertexBuffer) noexcept 
-    : Buffer(std::move(vertexBuffer)), modelMatrix(std::move(vertexBuffer.modelMatrix)) {
+    : Buffer(std::move(vertexBuffer)) {
 }
 
 VertexBuffer& VertexBuffer::operator=(const VertexBuffer& vertexBuffer) {
 
     if(this != &vertexBuffer) {
         Buffer::operator=(vertexBuffer);
-        modelMatrix = vertexBuffer.modelMatrix;
     }
 
     return *this;
@@ -295,7 +291,6 @@ VertexBuffer& VertexBuffer::operator=(VertexBuffer&& vertexBuffer) noexcept {
 
     if(this != &vertexBuffer) {
         Buffer::operator=(std::move(vertexBuffer));
-        modelMatrix = std::move(vertexBuffer.modelMatrix);
     }
 
     return *this;
