@@ -10,28 +10,13 @@
 #include <vendor/stb_image_write.h>
 
 #include "graphics/buffer.cuh"
+#include "graphics/renderer.cuh"
 #include "math/linalg.cuh"
 #include "math/transform.cuh"
 
 using namespace gph;
 
 int main() {
-
-
-    mat4<float> matrix(1.0f);
-    matrix.row1 = { 1.0f, 2.0f, 3.0f, -0.3f };
-    matrix.row2 = { 3.0f, -1.0f, 0.5f, 2.0f };
-    matrix.row3 = { -1.0f, 1.0f, -5.5f, 4.0f };
-    matrix.row4 = { -2.0f, 3.0f, -3.5f, 1.0f };
-
-    matrix = matrix.inverse();
-    matrix = matrix.inverse();
-
-    std::cout << matrix.row1.x << " " << matrix.row1.y << " " << matrix.row1.z << " " << matrix.row1.w << std::endl;
-    std::cout << matrix.row2.x << " " << matrix.row2.y << " " << matrix.row2.z << " " << matrix.row2.w << std::endl;
-    std::cout << matrix.row3.x << " " << matrix.row3.y << " " << matrix.row3.z << " " << matrix.row3.w << std::endl;
-    std::cout << matrix.row4.x << " " << matrix.row4.y << " " << matrix.row4.z << " " << matrix.row4.w << std::endl;
-
 
     size_t freeMem, totalMem;
     cudaMemGetInfo(&freeMem, &totalMem);
@@ -80,7 +65,7 @@ int main() {
 
     mat4<float> model = rotationX<float>(M_PI / 5) * rotationY<float>(M_PI / 5) * scale<float>(vec3<float>(0.5f));
     mat4<float> view = translation<float>(vec3<float>(-0.25f, 0.0f, 0.0f));
-    
+
     Uniforms uniforms(model, view);
     renderer.setUniforms(uniforms);
 

@@ -8,8 +8,6 @@
 
 #include <cuda_runtime.h>
 
-#include "math/linalg.cuh"
-
 namespace gph
 {
 
@@ -49,63 +47,25 @@ public:
     static BufferRegister* getInstance();
     static void destroyInstance();
 public:
+    inline void bindFbo(int fboID) { this->fboID = fboID; }
+    inline void bindVbo(int vboID) { this->vboID = vboID; }
+    inline void bindIbo(int iboID) { this->iboID = iboID; }
+
     inline void addFrameBuffer(const Ptr<FrameBuffer>& fbo) { fbos.push_back(fbo); }
     inline void addVertexBuffer(const Ptr<VertexBuffer>& vbo) { vbos.push_back(vbo); }
     inline void addIndexBuffer(const Ptr<IndexBuffer>& ibo) { ibos.push_back(ibo); }
-
+public:
     inline const std::vector<Ptr<FrameBuffer>>& getFrameBuffers() { return fbos; }
     inline const std::vector<Ptr<VertexBuffer>>& getVertexBuffers() { return vbos; }
     inline const std::vector<Ptr<IndexBuffer>>& getIndexBuffers() { return ibos; }
-
-    inline Ptr<FrameBuffer> getBindedFrameBuffer() const { return fbos[fboID - 1]; }
-    inline Ptr<VertexBuffer> getBindedVertexBuffer() const { return vbos[vboID - 1]; }
-    inline Ptr<IndexBuffer> getBindedIndexBuffer() const { return ibos[iboID - 1]; }
 
     inline int getBindedFrameBufferID() const { return fboID; }
     inline int getBindedVertexBufferID() const { return vboID; }
     inline int getBindedIndexBufferID() const { return iboID; }
 
-    inline void bindFbo(int fboID) { this->fboID = fboID; }
-    inline void bindVbo(int vboID) { this->vboID = vboID; }
-    inline void bindIbo(int iboID) { this->iboID = iboID; }
-};
-
-//-----------------//
-//     Renderer    //
-//-----------------//
-
-template <typename T>
-struct Uniforms {
-
-    mat4<T> modelMatrix;
-    mat4<T> viewMatrix;
-
-    Uniforms(const mat4<T>& _modelMatrix, const mat4<T>& _viewMatrix)
-        : modelMatrix(_modelMatrix), viewMatrix(_viewMatrix) {
-    }
-
-    Uniforms()
-        : modelMatrix(mat4<T>(1.0)), viewMatrix(mat4<T>(1.0)) {
-    }
-
-    ~Uniforms() = default;
-};
-
-class Renderer {
-private:
-    Uniforms<float> uniforms;
-public:
-    Renderer() = default;
-    ~Renderer() = default;
-public:
-    inline void setUniforms(const Uniforms<float>& uniforms) {
-        this->uniforms = uniforms;
-    }
-public:
-    void init();
-    void destroy();
-    void draw();
-    void clear();
+    inline Ptr<FrameBuffer> getBindedFrameBuffer() const { return fbos[fboID - 1]; }
+    inline Ptr<VertexBuffer> getBindedVertexBuffer() const { return vbos[vboID - 1]; }
+    inline Ptr<IndexBuffer> getBindedIndexBuffer() const { return ibos[iboID - 1]; }    
 };
 
 //-------------//
