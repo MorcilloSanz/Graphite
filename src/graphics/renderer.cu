@@ -1,6 +1,7 @@
 #include "renderer.cuh"
 
 #include "buffer.cuh"
+#include "texture.cuh"
 
 #include "kernel/fragment.cuh"
 #include "kernel/vertex.cuh"

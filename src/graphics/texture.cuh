@@ -8,6 +8,10 @@
 namespace gph
 {
 
+class TextureRegister {
+
+};
+
 class Texture {
 private:
     uint8_t* data;
