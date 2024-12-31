@@ -10,14 +10,6 @@
 namespace gph 
 {
 
-/**
- * Sets the color of a specific pixel in the framebuffer.
- *
- * @param frameBuffer The framebuffer to modify.
- * @param x Horizontal coordinate of the pixel.
- * @param y Vertical coordinate of the pixel.
- * @param color A vec3 containing the RGB color values for the pixel.
- */
 __device__ void setPixel(uint8_t* frameBuffer, int x, int y, int width, const vec3<unsigned char>& color) {
 
     frameBuffer[3 * (x + y * width)    ] = color.r;
