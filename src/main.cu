@@ -24,18 +24,16 @@ int main() {
     std::cout << "Total Memory (GPU): " << totalMem / (1024 * 1024) << " MB" << std::endl;
 
     // Renderer
-    Renderer renderer;
-    renderer.init();
-
-    // Frame buffer
     constexpr unsigned int width = 1080;
     constexpr unsigned int height = 720;
+    
+    Renderer renderer;
+    FrameBuffer frameBuffer(width, height);
+    renderer.setFrameBuffer(frameBuffer);
 
     size_t framebufferMem = sizeof(uint8_t) * width * height * 3;
     std::cout << "Frame Buffer Mem (GPU): " << static_cast<float>(framebufferMem) / (1024 * 1024) << "MB" << std::endl;
 
-    Ptr<FrameBuffer> frameBuffer = FrameBuffer::New(width, height);
-    
     // Vertex Buffer: x y z r g b
     float vertices[] = {
         -0.5, -0.5,  0.5,  0.0f, 0.0f, 1.0f,
@@ -48,7 +46,7 @@ int main() {
         -0.5,  0.5, -0.5,  0.0f, 1.0f, 0.5f
     };
 
-    Ptr<VertexBuffer> vertexBuffer = VertexBuffer::New(vertices, sizeof(vertices));
+    Buffer<float> vertexBuffer(vertices, sizeof(vertices));
 
     // Index buffer
     unsigned int indices[] = { 
@@ -58,7 +56,7 @@ int main() {
         3, 7, 4,  1, 0, 4,  6, 7, 3 
     };
 
-    Ptr<IndexBuffer> indexBuffer = IndexBuffer::New(indices, sizeof(indices));
+    Buffer<unsigned int> indexBuffer(indices, sizeof(indices));
     
     // Draw call
     renderer.clear();
@@ -69,19 +67,13 @@ int main() {
     Uniforms uniforms(model, view);
     renderer.setUniforms(uniforms);
 
-    frameBuffer->bind();
-    vertexBuffer->bind();
-    indexBuffer->bind();
-    renderer.draw();
+    renderer.draw(vertexBuffer, indexBuffer);
 
     // CPU image
-    uint8_t* bufferCPU = new uint8_t[frameBuffer->getSize()];
-    cudaMemcpy(bufferCPU, frameBuffer->getBuffer(), frameBuffer->getSize(), cudaMemcpyDeviceToHost);
+    uint8_t* bufferCPU = new uint8_t[renderer.getFrameBuffer().size];
+    cudaMemcpy(bufferCPU, renderer.getFrameBuffer().buff, renderer.getFrameBuffer().size, cudaMemcpyDeviceToHost);
     stbi_write_png("output.png", width, height, STBI_rgb, bufferCPU, width * STBI_rgb);
     delete[] bufferCPU;
-
-    // Destroy
-    renderer.destroy();
 
     return 0;
 }

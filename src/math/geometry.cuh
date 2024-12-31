@@ -103,6 +103,32 @@ struct Ray {
 
         return hitInfo;
     }
+
+    /**
+     * Casts a ray from a screen coordinate (x, y) into 3D space.
+     *
+     * @tparam T Data type for the ray components.
+     * @param x Horizontal screen coordinate.
+     * @param y Vertical screen coordinate.
+     * @param width Screen width in pixels.
+     * @param height Screen height in pixels.
+     * @return A Ray<T> representing the ray's origin and direction.
+     */
+    __device__ static Ray<T> castRay(int x, int y, unsigned int width, unsigned int height) {
+
+        T aspectRatio = static_cast<float>(width) / static_cast<float>(height);
+
+        vec3<T> origin = {
+            (2.0f * x / width - 1.0f) * aspectRatio, // Escalar x por el aspect ratio
+            1.0f - 2.0f * y / height,                 // Invertir y para que vaya de arriba a abajo
+            1.f 
+        };
+
+        vec3<T> direction = { 0.0f, 0.0f, -1.0f };
+        Ray<T> ray(origin, direction);
+
+        return ray;
+    }
 };
 
 }

@@ -3,44 +3,12 @@
 #include "math/linalg.cuh"
 #include "math/geometry.cuh"
 
-#include "kernelbuffer.cuh"
+#include "graphics/buffer.cuh"
 #include "attributes.cuh"
 
-/**
- * 1) Join all the meshes of a scene.
- * 2) Send them to GPU using VertexBuffer.
- * 3) Build BVH of the whole scene.
- * 5) Pass the BVH as a parameter to the kernel
- */
+
 namespace gph 
 {
-
-/**
- * Casts a ray from a screen coordinate (x, y) into 3D space.
- *
- * @tparam T Data type for the ray components.
- * @param x Horizontal screen coordinate.
- * @param y Vertical screen coordinate.
- * @param width Screen width in pixels.
- * @param height Screen height in pixels.
- * @return A Ray<T> representing the ray's origin and direction.
- */
-template <typename T>
-__device__ Ray<T> castRay(int x, int y, unsigned int width, unsigned int height) {
-
-    float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
-
-    vec3<float> origin = {
-        (2.0f * x / width - 1.0f) * aspectRatio, // Escalar x por el aspect ratio
-        1.0f - 2.0f * y / height,                 // Invertir y para que vaya de arriba a abajo
-        1.f 
-    };
-
-    vec3<float> direction = { 0.0f, 0.0f, -1.0f };
-    Ray<float> ray(origin, direction);
-
-    return ray;
-}
 
 /**
  * Sets the color of a specific pixel in the framebuffer.
@@ -50,35 +18,31 @@ __device__ Ray<T> castRay(int x, int y, unsigned int width, unsigned int height)
  * @param y Vertical coordinate of the pixel.
  * @param color A vec3 containing the RGB color values for the pixel.
  */
-__device__ void setPixel(KernelFrameBuffer frameBuffer, int x, int y, 
-    const vec3<unsigned char>& color) {
+__device__ void setPixel(uint8_t* frameBuffer, int x, int y, int width, const vec3<unsigned char>& color) {
 
-    frameBuffer.buffer[3 * (x + y * frameBuffer.width)    ] = color.r;
-    frameBuffer.buffer[3 * (x + y * frameBuffer.width) + 1] = color.g;
-    frameBuffer.buffer[3 * (x + y * frameBuffer.width) + 2] = color.b;
+    frameBuffer[3 * (x + y * width)    ] = color.r;
+    frameBuffer[3 * (x + y * width) + 1] = color.g;
+    frameBuffer[3 * (x + y * width) + 2] = color.b;
 }
 
-__global__ void kernel_fragment(KernelFrameBuffer kernelFrameBuffer, KernelBuffer kernelVertexBuffer, 
-    KernelBuffer kernelIndexBuffer) {
+__global__ void kernel_fragment(uint8_t* frameBuffer, unsigned int width, unsigned int height, 
+    float* vertexBuffer, size_t vertexSize, unsigned int *indexBuffer, size_t indexSize) {
 
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
 
-    if (x >= kernelFrameBuffer.width || y >= kernelFrameBuffer.height) {
+    if (x >= width || y >= height) {
         return;
     }
 
-    // Buffers
-    float* vertexBuffer = (float*) kernelVertexBuffer.buffer;
-    unsigned int* indexBuffer = (unsigned int*) kernelIndexBuffer.buffer;
-
     // Ray casting
-    Ray<float> ray = castRay<float>(x, y, kernelFrameBuffer.width, kernelFrameBuffer.height);
+    Ray<float> ray = Ray<float>::castRay(x, y, width, height);
     float distance = INFINITY;
     bool missed = true;
 
     // Ray intersections
-    for(int i = 0; i < kernelIndexBuffer.count; i += 3) {
+    int count = indexSize / sizeof(unsigned int);
+    for(int i = 0; i < count; i += 3) {
 
         vec3<float> X = getAttributes(vertexBuffer, indexBuffer, i, ATTRIBUTE_X); // v1x v2x v3x
         vec3<float> Y = getAttributes(vertexBuffer, indexBuffer, i, ATTRIBUTE_Y); // v1y v2y v3y
@@ -113,13 +77,13 @@ __global__ void kernel_fragment(KernelFrameBuffer kernelFrameBuffer, KernelBuffe
                 static_cast<unsigned char>(colorInterpolation.z * 255),
             };
 
-            setPixel(kernelFrameBuffer, x, y, pixelColor);
+            setPixel(frameBuffer, x, y, width, pixelColor);
         }
     }
 
     // Miss function
     if(missed) {
-        setPixel(kernelFrameBuffer, x, y, vec3<unsigned char>(0, 0, 0));
+        setPixel(frameBuffer, x, y, width, vec3<unsigned char>(0, 0, 0));
     }
 }
 

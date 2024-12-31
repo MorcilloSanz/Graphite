@@ -1,6 +1,7 @@
 #pragma once
 
 #include "math/linalg.cuh"
+#include "graphics/buffer.cuh"
 
 namespace gph
 {
@@ -22,30 +23,25 @@ struct Uniforms {
     ~Uniforms() = default;
 };
 
-class KernelBuffer;
-class KernelFrameBuffer;
-
 class Renderer {
 private:
+    FrameBuffer frameBuffer;
     Uniforms<float> uniforms;
 public:
     Renderer() = default;
     ~Renderer() = default;
 private:
-    KernelBuffer getKernelVertexBuffer();
-    KernelBuffer getKernelIndexBuffer();
-
-    void vertexShader(const KernelBuffer& kernelVertexBuffer, const KernelBuffer& kernelIndexBuffer);
-    void fragmentShader(const KernelFrameBuffer& kernelFrameBuffer, const KernelBuffer& kernelVertexBuffer, 
-        const KernelBuffer& kernelIndexBuffer);
+    void vertexShader(const Buffer<float>& vertexBuffer, const Buffer<unsigned int>& indexBuffer);
+    void fragmentShader(const Buffer<float>& vertexBuffer, const Buffer<unsigned int>& indexBuffer);
 public:
-    void init();
-    void destroy();
-    void draw();
+    void draw(const Buffer<float>& vertexBuffer, const Buffer<unsigned int>& indexBuffer);
     void clear();
 public:
     inline void setUniforms(const Uniforms<float>& uniforms) { this->uniforms = uniforms; }
     inline const Uniforms<float>& getUniforms() { return uniforms; }
+
+    inline void setFrameBuffer(const FrameBuffer& frameBuffer) { this->frameBuffer = frameBuffer; };
+    inline FrameBuffer& getFrameBuffer() { return frameBuffer; }
 };
 
 }
