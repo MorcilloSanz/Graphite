@@ -51,7 +51,6 @@ set(CUDA_HEADERS
     src/graphics/buffer.cuh
     src/graphics/texture.cuh
     src/graphics/renderer.cuh
-    src/graphics/kernel/kernelbuffer.cuh
     src/graphics/kernel/attributes.cuh
     src/graphics/kernel/fragment.cuh
     src/graphics/kernel/vertex.cuh

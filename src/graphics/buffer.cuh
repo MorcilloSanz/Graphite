@@ -17,23 +17,23 @@ struct Buffer {
     T* buff;
     size_t size;
 
-    __host__ __device__ Buffer(size_t _size);
-    __host__ __device__ Buffer(T* data, size_t _size);
-    __host__ __device__ Buffer() = default;
+    Buffer(size_t _size);
+    Buffer(T* data, size_t _size);
+    Buffer() = default;
 
-    __host__ __device__ ~Buffer();
+    ~Buffer();
 };
 
 struct FrameBuffer : public Buffer<uint8_t> {
 
     unsigned int width, height;
 
-    __host__ __device__ FrameBuffer(unsigned int _width, unsigned int _height);
-    __host__ __device__ FrameBuffer() = default;
+    FrameBuffer(unsigned int _width, unsigned int _height);
+    FrameBuffer() = default;
 
-    __host__ __device__ ~FrameBuffer() = default;
+    ~FrameBuffer() = default;
 
-    __host__ __device__ void clear();
+    void clear();
 };
 
 void check_cuda_error(const char* message);

@@ -9,15 +9,19 @@
 namespace gph
 {
 
+Renderer::Renderer(unsigned int width, unsigned int height) 
+    : frameBuffer(width, height) {
+}
+
 void Renderer::vertexShader(const Buffer<float>& vertexBuffer, const Buffer<unsigned int>& indexBuffer) {
 
     mat4<float> modelViewMatrix = uniforms.viewMatrix * uniforms.modelMatrix;
 
-    int threadsPerBlockVertex = 256;
+    int threadsPerBlock = 256;
     int count = indexBuffer.size / sizeof(unsigned int);
-    int numBlocksVertex = (count + threadsPerBlockVertex - 1) / threadsPerBlockVertex;
+    int numBlocks = (count + threadsPerBlock - 1) / threadsPerBlock;
 
-    kernel_vertex<<<numBlocksVertex, threadsPerBlockVertex>>>(vertexBuffer.buff, vertexBuffer.size, 
+    kernel_vertex<<<numBlocks, threadsPerBlock>>>(vertexBuffer.buff, vertexBuffer.size, 
         indexBuffer.buff, indexBuffer.size, modelViewMatrix);
 
     cudaDeviceSynchronize();

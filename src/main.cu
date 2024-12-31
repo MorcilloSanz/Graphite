@@ -1,8 +1,6 @@
 #include <iostream>
 #include <cstdint>
 
-#include <cuda_runtime.h>
-
 #define STB_IMAGE_IMPLEMENTATION
 #include <vendor/stb_image.h>
 
@@ -11,6 +9,7 @@
 
 #include "graphics/buffer.cuh"
 #include "graphics/renderer.cuh"
+
 #include "math/linalg.cuh"
 #include "math/transform.cuh"
 
@@ -27,9 +26,7 @@ int main() {
     constexpr unsigned int width = 1080;
     constexpr unsigned int height = 720;
     
-    Renderer renderer;
-    FrameBuffer frameBuffer(width, height);
-    renderer.setFrameBuffer(frameBuffer);
+    Renderer renderer(width, height);
 
     size_t framebufferMem = sizeof(uint8_t) * width * height * 3;
     std::cout << "Frame Buffer Mem (GPU): " << static_cast<float>(framebufferMem) / (1024 * 1024) << "MB" << std::endl;
@@ -71,8 +68,10 @@ int main() {
 
     // CPU image
     uint8_t* bufferCPU = new uint8_t[renderer.getFrameBuffer().size];
+
     cudaMemcpy(bufferCPU, renderer.getFrameBuffer().buff, renderer.getFrameBuffer().size, cudaMemcpyDeviceToHost);
     stbi_write_png("output.png", width, height, STBI_rgb, bufferCPU, width * STBI_rgb);
+    
     delete[] bufferCPU;
 
     return 0;

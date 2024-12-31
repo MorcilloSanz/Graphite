@@ -28,6 +28,7 @@ private:
     FrameBuffer frameBuffer;
     Uniforms<float> uniforms;
 public:
+    Renderer(unsigned int width, unsigned int height);
     Renderer() = default;
     ~Renderer() = default;
 private:
@@ -40,7 +41,6 @@ public:
     inline void setUniforms(const Uniforms<float>& uniforms) { this->uniforms = uniforms; }
     inline const Uniforms<float>& getUniforms() { return uniforms; }
 
-    inline void setFrameBuffer(const FrameBuffer& frameBuffer) { this->frameBuffer = frameBuffer; };
     inline FrameBuffer& getFrameBuffer() { return frameBuffer; }
 };
 
