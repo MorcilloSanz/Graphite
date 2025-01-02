@@ -23,12 +23,4 @@ Texture::Texture(uint8_t* hData, size_t _width, size_t _height)
     texDesc.normalizedCoords = 1; // Coordenadas normalizadas    
 }
 
-void Texture::bind() {
-    
-}
-
-void Texture::unbind() {
-    
-}
-
 }
