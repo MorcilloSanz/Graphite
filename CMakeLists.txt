@@ -38,6 +38,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
+# ASSIMP
+find_package(assimp REQUIRED)
+
 # Include src
 include_directories(src)
 
@@ -50,6 +53,7 @@ set(CXX_HEADERS
 set(CUDA_HEADERS
     src/graphics/buffer.cuh
     src/graphics/texture.cuh
+    src/graphics/material.cuh
     src/graphics/renderer.cuh
     src/graphics/kernel/attributes.cuh
     src/graphics/kernel/fragment.cuh
@@ -78,4 +82,4 @@ add_executable(${PROJECT_NAME} ${CXX_SOURCES} ${CXX_HEADERS} ${CUDA_SOURCES} ${C
 set_target_properties(${PROJECT_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 # Link CUDA executable with CUDA libraries
-target_link_libraries(${PROJECT_NAME} ${CUDA_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${CUDA_LIBRARIES} assimp::assimp )
