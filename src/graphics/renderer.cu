@@ -15,14 +15,20 @@ Renderer::Renderer(unsigned int width, unsigned int height)
 
 void Renderer::vertexShader(const Buffer<float>& vertexBuffer, const Buffer<unsigned int>& indexBuffer) {
 
-    mat4<float> modelViewMatrix = uniforms.viewMatrix * uniforms.modelMatrix;
+    mat4<float> modelviewMatrix = uniforms.viewMatrix * uniforms.modelMatrix;
+
+    mat3<float> normalMatrix;
+    normalMatrix.row1 = uniforms.modelMatrix.row1.xyz();
+    normalMatrix.row2 = uniforms.modelMatrix.row2.xyz();
+    normalMatrix.row3 = uniforms.modelMatrix.row3.xyz();
+    normalMatrix = normalMatrix.inverse().transpose();
 
     int threadsPerBlock = 256;
     int count = indexBuffer.size / sizeof(unsigned int);
     int numBlocks = (count + threadsPerBlock - 1) / threadsPerBlock;
 
     kernel_vertex<<<numBlocks, threadsPerBlock>>>(vertexBuffer.buff, vertexBuffer.size, 
-        indexBuffer.buff, indexBuffer.size, modelViewMatrix);
+        indexBuffer.buff, indexBuffer.size, modelviewMatrix, normalMatrix);
 
     cudaDeviceSynchronize();
 }

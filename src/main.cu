@@ -31,26 +31,43 @@ int main() {
     size_t framebufferMem = sizeof(uint8_t) * width * height * 3;
     std::cout << "Frame Buffer Mem (GPU): " << static_cast<float>(framebufferMem) / (1024 * 1024) << "MB" << std::endl;
 
-    // Vertex Buffer: x y z r g b
+    // Vertex Buffer: x y z r g b nx ny nz uvx uvy
     float vertices[] = {
-        -0.5, -0.5,  0.5,  0.0f, 0.0f, 1.0f,
-         0.5, -0.5,  0.5,  1.0f, 0.0f, 1.0f,
-         0.5,  0.5,  0.5,  0.0f, 1.0f, 1.0f,
-        -0.5,  0.5,  0.5,  0.0f, 1.0f, 0.5f,
-        -0.5, -0.5, -0.5,  0.0f, 0.0f, 1.0f,
-         0.5, -0.5, -0.5,  1.0f, 0.0f, 1.0f,
-         0.5,  0.5, -0.5,  0.0f, 1.0f, 1.0f,
-        -0.5,  0.5, -0.5,  0.0f, 1.0f, 0.5f
+        // Front face
+        -1.0, -1.0,  1.0,   1.0, 1.0, 1.0,   0.0f, 0.0f,  1.0f,   0.0f, 0.0f,
+        1.0, -1.0,  1.0,   1.0, 1.0, 1.0,   0.0f, 0.0f,  1.0f,   1.0f, 0.0f,
+        1.0,  1.0,  1.0,   1.0, 1.0, 1.0,   0.0f, 0.0f,  1.0f,   1.0f, 1.0f,
+        -1.0,  1.0,  1.0,   1.0, 1.0, 1.0,   0.0f, 0.0f,  1.0f,   0.0f, 1.0f,
+
+        // Back face
+        -1.0, -1.0, -1.0,   1.0, 1.0, 1.0,   0.0f, 0.0f, -1.0f,   1.0f, 0.0f,
+        1.0, -1.0, -1.0,   1.0, 1.0, 1.0,   0.0f, 0.0f, -1.0f,   0.0f, 0.0f,
+        1.0,  1.0, -1.0,   1.0, 1.0, 1.0,   0.0f, 0.0f, -1.0f,   0.0f, 1.0f,
+        -1.0,  1.0, -1.0,   1.0, 1.0, 1.0,   0.0f, 0.0f, -1.0f,   1.0f, 1.0f,
+
+        // Left face
+        -1.0, -1.0, -1.0,   1.0, 1.0, 1.0,   -1.0f, 0.0f, 0.0f,   0.0f, 0.0f,
+        -1.0, -1.0,  1.0,   1.0, 1.0, 1.0,   -1.0f, 0.0f, 0.0f,   1.0f, 0.0f,
+        -1.0,  1.0,  1.0,   1.0, 1.0, 1.0,   -1.0f, 0.0f, 0.0f,   1.0f, 1.0f,
+        -1.0,  1.0, -1.0,   1.0, 1.0, 1.0,   -1.0f, 0.0f, 0.0f,   0.0f, 1.0f,
+
+        // Right face
+        1.0, -1.0, -1.0,   1.0, 1.0, 1.0,    1.0f, 0.0f, 0.0f,   0.0f, 0.0f,
+        1.0, -1.0,  1.0,   1.0, 1.0, 1.0,    1.0f, 0.0f, 0.0f,   1.0f, 0.0f,
+        1.0,  1.0,  1.0,   1.0, 1.0, 1.0,    1.0f, 0.0f, 0.0f,   1.0f, 1.0f,
+        1.0,  1.0, -1.0,   1.0, 1.0, 1.0,    1.0f, 0.0f, 0.0f,   0.0f, 1.0f,
     };
 
     Buffer<float> vertexBuffer(vertices, sizeof(vertices));
 
     // Index buffer
-    unsigned int indices[] = { 
-        0, 1, 2,  1, 5, 6,  7, 6, 5,
-        2, 3, 0,  6, 2, 1,  5, 4, 7,
-        4, 0, 3,  4, 5, 1,  3, 2, 6,
-        3, 7, 4,  1, 0, 4,  6, 7, 3 
+    unsigned int indices[] = {
+        0, 1, 2, 2, 3, 0,   // Front face
+        4, 5, 6, 6, 7, 4,   // Back face
+        8, 9, 10, 10, 11, 8, // Left face
+        12, 13, 14, 14, 15, 12, // Right face
+        3, 2, 6, 6, 7, 3,   // Top face
+        0, 1, 5, 5, 4, 0    // Bottom face
     };
 
     Buffer<unsigned int> indexBuffer(indices, sizeof(indices));
@@ -58,7 +75,7 @@ int main() {
     // Draw call
     renderer.clear();
 
-    mat4<float> model = rotationX<float>(M_PI / 5) * rotationY<float>(M_PI / 5) * scale<float>(vec3<float>(0.5f));
+    mat4<float> model = rotationX<float>(M_PI / 5) * rotationY<float>(M_PI / 5) * scale<float>(vec3<float>(0.25f));
     mat4<float> view = translation<float>(vec3<float>(0.25f, 0.25f, 0.0f));
 
     Uniforms uniforms(model, view);

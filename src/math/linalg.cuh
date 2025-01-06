@@ -338,7 +338,7 @@ struct mat2 {
         return result;
     }
 
-    __host__ __device__ mat2 product(const mat2& matrix) {
+    __host__ __device__ mat2 product(const mat2& matrix) const {
 
         mat2<T> result;
 
@@ -350,7 +350,7 @@ struct mat2 {
         return result;
     }
 
-    __host__ __device__ vec2<T> transform(const vec2<T>& v) {
+    __host__ __device__ vec2<T> transform(const vec2<T>& v) const {
 
         vec2<T> result;
 
@@ -411,11 +411,15 @@ struct mat2 {
     }
 
     __host__ __device__ mat2 operator*(const mat2& matrix) const {
-        return hadamard(matrix);
+        return product(matrix);
+    }
+
+    __host__ __device__ vec2<T> operator*(const vec2<T>& vec) const {
+        return transform(vec);
     }
 
     __host__ __device__ mat2 operator*(T value) const {
-        return hadamard(mat2<T>::full(value));
+        return product(mat2<T>::full(value));
     }
 
     __host__ __device__ mat2 operator/(const mat2& matrix) const {
@@ -487,7 +491,7 @@ struct mat3 {
         return result;
     }
 
-    __host__ __device__ mat3 hadamard(const mat3& matrix) {
+    __host__ __device__ mat3 hadamard(const mat3& matrix) const {
 
         mat3<T> result;
 
@@ -509,7 +513,7 @@ struct mat3 {
         return result;
     }
 
-    __host__ __device__ mat3 product(const mat3& matrix) {
+    __host__ __device__ mat3 product(const mat3& matrix) const {
 
         mat3<T> result;
 
@@ -528,7 +532,7 @@ struct mat3 {
         return result;
     }
 
-    __host__ __device__ vec3<T> transform(const vec3<T>& v) {
+    __host__ __device__ vec3<T> transform(const vec3<T>& v) const {
 
         vec3<T> result;
 
@@ -598,11 +602,15 @@ struct mat3 {
     }
 
     __host__ __device__ mat3 operator*(const mat3& matrix) const {
-        return hadamard(matrix);
+        return product(matrix);
+    }
+
+    __host__ __device__ vec3<T> operator*(const vec3<T>& vec) const {
+        return transform(vec);
     }
 
     __host__ __device__ mat3 operator*(T value) const {
-        return hadamard(mat3<T>::full(value));
+        return product(mat3<T>::full(value));
     }
 
     __host__ __device__ mat3 operator/(const mat3& matrix) const {

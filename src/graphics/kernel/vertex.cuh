@@ -10,7 +10,7 @@ namespace gph
 {
 
 __global__ void kernel_vertex(float* vertexBuffer, size_t vertexSize, unsigned int* indexBuffer, 
-    size_t indexSize, mat4<float> modelview) {
+    size_t indexSize, mat4<float> modelviewMatrix, mat3<float> normalMatrix) {
 
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     
@@ -18,24 +18,34 @@ __global__ void kernel_vertex(float* vertexBuffer, size_t vertexSize, unsigned i
     if (idx >= count)
         return;
     
-    // transform vertex
-    vec4<float> vertex = {
+    // transform vertex position
+    vec4<float> position = {
         getAttribute(vertexBuffer, indexBuffer, idx, ATTRIBUTE_X),
         getAttribute(vertexBuffer, indexBuffer, idx, ATTRIBUTE_Y),
         getAttribute(vertexBuffer, indexBuffer, idx, ATTRIBUTE_Z),
         1.0f
     };
 
-    vec4<float> transformed = modelview * vertex;
+    vec4<float> positionPrime = modelviewMatrix * position;
 
-    // update vertex buffer
-    unsigned int attributeIndexX = getAttributeIndex(indexBuffer, idx, ATTRIBUTE_X);
-    unsigned int attributeIndexY = getAttributeIndex(indexBuffer, idx, ATTRIBUTE_Y);
-    unsigned int attributeIndexZ = getAttributeIndex(indexBuffer, idx, ATTRIBUTE_Z);
+    // transform normal
+    vec3<float> normal = {
+        getAttribute(vertexBuffer, indexBuffer, idx, ATTRIBUTE_NX),
+        getAttribute(vertexBuffer, indexBuffer, idx, ATTRIBUTE_NY),
+        getAttribute(vertexBuffer, indexBuffer, idx, ATTRIBUTE_NZ)
+    };
 
-    vertexBuffer[attributeIndexX] = transformed.x;
-    vertexBuffer[attributeIndexY] = transformed.y;
-    vertexBuffer[attributeIndexZ] = transformed.z;
+    vec3<float> normalPrime = normalMatrix * normal;
+
+    // update position 
+    vertexBuffer[getAttributeIndex(indexBuffer, idx, ATTRIBUTE_X)] = positionPrime.x;
+    vertexBuffer[getAttributeIndex(indexBuffer, idx, ATTRIBUTE_Y)] = positionPrime.y;
+    vertexBuffer[getAttributeIndex(indexBuffer, idx, ATTRIBUTE_Z)] = positionPrime.z;
+
+    // update normal
+    vertexBuffer[getAttributeIndex(indexBuffer, idx, ATTRIBUTE_NX)] = normalPrime.x;
+    vertexBuffer[getAttributeIndex(indexBuffer, idx, ATTRIBUTE_NY)] = normalPrime.y;
+    vertexBuffer[getAttributeIndex(indexBuffer, idx, ATTRIBUTE_NZ)] = normalPrime.z;
 }
 
 }
