@@ -19,7 +19,7 @@ private:
 public:
     Texture(uint8_t* hData, size_t _width, size_t _height);
     Texture() = default;
-    ~Texture() = default;
+    ~Texture();
 public:
     inline size_t getWidth() const { return width; }
     inline size_t getHeight() const { return height; }

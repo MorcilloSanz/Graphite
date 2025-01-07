@@ -53,9 +53,8 @@ __device__ vec3<float> getBarycentricNormal(float* vertexBuffer, unsigned int* i
     vec3<float> n3 = { NX.z, NY.z, NZ.z };
 
     vec3<float> n = n1 * barycentricCoords.x + n2 * barycentricCoords.y + n3 * barycentricCoords.z;
-    n = n / n.module();
 
-    return n;
+    return n.normalize();
 }
 
 __device__ vec2<float> getBarycentricUVs(float* vertexBuffer, unsigned int* indexBuffer, int i, vec3<float> barycentricCoords) {

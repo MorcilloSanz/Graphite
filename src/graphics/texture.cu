@@ -37,4 +37,15 @@ Texture::Texture(uint8_t* hData, size_t _width, size_t _height)
     }  
 }
 
+Texture::~Texture() {
+
+    if (texObj) {
+        cudaDestroyTextureObject(texObj);
+    }
+
+    if (resDesc.resType == cudaResourceTypeArray && resDesc.res.array.array) {
+        cudaFreeArray(resDesc.res.array.array);
+    }
+}
+
 }
