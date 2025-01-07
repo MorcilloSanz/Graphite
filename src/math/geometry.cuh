@@ -86,17 +86,23 @@ struct Ray {
         vec3<T> s = origin - triangle.v1;
 
         float u = inv_det * s.dot(ray_cross_e2);
-        if (u < 0 || u > 1) return hitInfo;
+        if (u < 0 || u > 1) 
+            return hitInfo;
 
-        vec3 s_cross_e1 = s.cross(edge1);
+        vec3<T> s_cross_e1 = s.cross(edge1);
         float v = direction.dot(s_cross_e1) * inv_det;
-        if (v < 0 || u + v > 1) return hitInfo;
+        if (v < 0 || u + v > 1) 
+            return hitInfo;
 
         float t = edge2.dot(s_cross_e1) * inv_det;
         if (t > EPSILON) {
-            hitInfo.intersection = vec3(origin + direction * t);
+            hitInfo.intersection = vec3<T>(origin + direction * t);
             hitInfo.distance = t;
-            vec3<T> normal = edge2.cross(edge1);
+
+            vec3<T> normal = edge1.cross(edge2); // CCW
+            if (normal.dot(direction) > 0)
+                normal = normal * -1;
+
             hitInfo.normal = normal / normal.module();
             hitInfo.hit = true;
         }

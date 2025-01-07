@@ -62,20 +62,4 @@ __device__ vec3<float> getAttributes3(float* vertexBuffer, unsigned int* indexBu
     };
 }
 
-/**
- * Retrieves three consecutive vertex attributes as a vec3.
- *
- * @param vertexBuffer Pointer to the vertex buffer containing vertex data.
- * @param indexBuffer Pointer to the index buffer mapping vertices.
- * @param i Starting index of the vertex in the index buffer.
- * @param attribute Offset of the desired attribute within the vertex data.
- * @return A vec2<float> containing the two specified attributes.
- */
-__device__ vec2<float> getAttributes2(float* vertexBuffer, unsigned int* indexBuffer, int i, int attribute) {
-    return {
-        getAttribute(vertexBuffer, indexBuffer, i + 0, attribute),
-        getAttribute(vertexBuffer, indexBuffer, i + 1, attribute),
-    };
-}
-
 }

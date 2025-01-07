@@ -33,50 +33,29 @@ int main() {
 
     // Vertex Buffer: x y z r g b nx ny nz uvx uvy
     float vertices[] = {
-        // Front face
-        -1.0, -1.0,  1.0,   1.0, 1.0, 1.0,   0.0f, 0.0f,  1.0f,   0.0f, 0.0f,
-        1.0, -1.0,  1.0,   1.0, 1.0, 1.0,   0.0f, 0.0f,  1.0f,   1.0f, 0.0f,
-        1.0,  1.0,  1.0,   1.0, 1.0, 1.0,   0.0f, 0.0f,  1.0f,   1.0f, 1.0f,
-        -1.0,  1.0,  1.0,   1.0, 1.0, 1.0,   0.0f, 0.0f,  1.0f,   0.0f, 1.0f,
-
-        // Back face
-        -1.0, -1.0, -1.0,   1.0, 1.0, 1.0,   0.0f, 0.0f, -1.0f,   1.0f, 0.0f,
-        1.0, -1.0, -1.0,   1.0, 1.0, 1.0,   0.0f, 0.0f, -1.0f,   0.0f, 0.0f,
-        1.0,  1.0, -1.0,   1.0, 1.0, 1.0,   0.0f, 0.0f, -1.0f,   0.0f, 1.0f,
-        -1.0,  1.0, -1.0,   1.0, 1.0, 1.0,   0.0f, 0.0f, -1.0f,   1.0f, 1.0f,
-
-        // Left face
-        -1.0, -1.0, -1.0,   1.0, 1.0, 1.0,   -1.0f, 0.0f, 0.0f,   0.0f, 0.0f,
-        -1.0, -1.0,  1.0,   1.0, 1.0, 1.0,   -1.0f, 0.0f, 0.0f,   1.0f, 0.0f,
-        -1.0,  1.0,  1.0,   1.0, 1.0, 1.0,   -1.0f, 0.0f, 0.0f,   1.0f, 1.0f,
-        -1.0,  1.0, -1.0,   1.0, 1.0, 1.0,   -1.0f, 0.0f, 0.0f,   0.0f, 1.0f,
-
-        // Right face
-        1.0, -1.0, -1.0,   1.0, 1.0, 1.0,    1.0f, 0.0f, 0.0f,   0.0f, 0.0f,
-        1.0, -1.0,  1.0,   1.0, 1.0, 1.0,    1.0f, 0.0f, 0.0f,   1.0f, 0.0f,
-        1.0,  1.0,  1.0,   1.0, 1.0, 1.0,    1.0f, 0.0f, 0.0f,   1.0f, 1.0f,
-        1.0,  1.0, -1.0,   1.0, 1.0, 1.0,    1.0f, 0.0f, 0.0f,   0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f, -1.0f,  0.0f, 0.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f, -1.0f,  1.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f, -1.0f,  1.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 1.0f,  0.0f, 0.0f, -1.0f,  0.0f, 1.0f,
+         0.0f,  0.5f,  0.0f,  1.0f, 0.5f, 0.5f,  0.0f, 1.0f,  0.0f,  0.5f, 0.5f
     };
 
     Buffer<float> vertexBuffer(vertices, sizeof(vertices));
 
     // Index buffer
     unsigned int indices[] = {
-        0, 1, 2, 2, 3, 0,   // Front face
-        4, 5, 6, 6, 7, 4,   // Back face
-        8, 9, 10, 10, 11, 8, // Left face
-        12, 13, 14, 14, 15, 12, // Right face
-        3, 2, 6, 6, 7, 3,   // Top face
-        0, 1, 5, 5, 4, 0    // Bottom face
+        0, 1, 4, 1, 2, 4,
+        2, 3, 4, 3, 0, 4,
+        0, 1, 2, 0, 2, 3
     };
-
+    
     Buffer<unsigned int> indexBuffer(indices, sizeof(indices));
     
     // Draw call
     renderer.clear();
 
-    mat4<float> model = rotationX<float>(M_PI / 5) * rotationY<float>(M_PI / 5) * scale<float>(vec3<float>(0.25f));
-    mat4<float> view = translation<float>(vec3<float>(0.25f, 0.25f, 0.0f));
+    mat4<float> model = rotationX<float>(M_PI / 5) * rotationY<float>(M_PI / 5);
+    mat4<float> view = scale<float>(vec3<float>(0.75f));
 
     Uniforms uniforms(model, view);
     renderer.setUniforms(uniforms);
