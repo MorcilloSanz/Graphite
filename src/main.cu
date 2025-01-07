@@ -50,6 +50,15 @@ int main() {
     };
     
     Buffer<unsigned int> indexBuffer(indices, sizeof(indices));
+
+    // Sky
+    int skyWidth, skyHeight, skyBpp;
+    unsigned char* skyData = stbi_load("c:/Users/amorc/Desktop/sky.png", &skyWidth, &skyHeight, &skyBpp, STBI_rgb_alpha);
+
+    Texture sky(skyData, width, height);
+    renderer.setSky(sky);
+
+    stbi_image_free(skyData);
     
     // Draw call
     renderer.clear();

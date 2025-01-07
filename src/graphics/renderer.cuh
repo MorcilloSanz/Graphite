@@ -2,6 +2,7 @@
 
 #include "math/linalg.cuh"
 #include "graphics/buffer.cuh"
+#include "graphics/texture.cuh"
 
 namespace gph
 {
@@ -27,6 +28,8 @@ class Renderer {
 private:
     FrameBuffer frameBuffer;
     Uniforms<float> uniforms;
+    Texture sky;
+    bool hasSky;
 public:
     Renderer(unsigned int width, unsigned int height);
     Renderer() = default;
@@ -35,6 +38,7 @@ private:
     void vertexShader(const Buffer<float>& vertexBuffer, const Buffer<unsigned int>& indexBuffer);
     void fragmentShader(const Buffer<float>& vertexBuffer, const Buffer<unsigned int>& indexBuffer);
 public:
+    void setSky(const Texture& sky);
     void draw(const Buffer<float>& vertexBuffer, const Buffer<unsigned int>& indexBuffer);
     void clear();
 public:

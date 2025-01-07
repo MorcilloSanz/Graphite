@@ -10,7 +10,7 @@ namespace gph
 {
 
 Renderer::Renderer(unsigned int width, unsigned int height) 
-    : frameBuffer(width, height) {
+    : frameBuffer(width, height), hasSky(false) {
 }
 
 void Renderer::vertexShader(const Buffer<float>& vertexBuffer, const Buffer<unsigned int>& indexBuffer) {
@@ -35,14 +35,29 @@ void Renderer::vertexShader(const Buffer<float>& vertexBuffer, const Buffer<unsi
 
 void Renderer::fragmentShader(const Buffer<float>& vertexBuffer, const Buffer<unsigned int>& indexBuffer) {
 
+    KernelFragmentParams params;
+    params.frameBuffer = frameBuffer.buff;
+    params.width = frameBuffer.width;
+    params.height = frameBuffer.height;
+    params.vertexBuffer = vertexBuffer.buff;
+    params.vertexSize = vertexBuffer.size;
+    params.indexBuffer = indexBuffer.buff;
+    params.indexSize = indexBuffer.size;
+    
+    params.hasSky = hasSky;
+    if(hasSky) params.skyTextureObj = sky.getTextureObject();
+
     dim3 threadsPerBlock(16, 16);
     dim3 blocksPerGrid((frameBuffer.width + threadsPerBlock.x - 1) / threadsPerBlock.x,
                     (frameBuffer.height + threadsPerBlock.y - 1) / threadsPerBlock.y);
 
-    kernel_fragment<<<blocksPerGrid, threadsPerBlock>>>(frameBuffer.buff, frameBuffer.width, frameBuffer.height, vertexBuffer.buff, 
-        vertexBuffer.size, indexBuffer.buff, indexBuffer.size);
-        
+    kernel_fragment<<<blocksPerGrid, threadsPerBlock>>>(params);
     cudaDeviceSynchronize();
+}
+
+void Renderer::setSky(const Texture& sky) {
+    this->sky = sky;
+    hasSky = true;
 }
 
 void Renderer::draw(const Buffer<float>& vertexBuffer, const Buffer<unsigned int>& indexBuffer) {

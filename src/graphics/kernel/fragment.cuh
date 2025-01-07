@@ -1,14 +1,33 @@
 #pragma once
 
+#include <cmath>
+
 #include "math/linalg.cuh"
 #include "math/geometry.cuh"
 
 #include "graphics/buffer.cuh"
+#include "graphics/texture.cuh"
 #include "attributes.cuh"
 
 
 namespace gph 
 {
+
+struct KernelFragmentParams {
+
+    uint8_t* frameBuffer;
+    unsigned int width;
+    unsigned int height;
+
+    float* vertexBuffer;
+    size_t vertexSize;
+    
+    unsigned int* indexBuffer;
+    size_t indexSize;
+
+    cudaTextureObject_t skyTextureObj;
+    bool hasSky;
+};
 
 __device__ vec3<float> getBarycentricColor(float* vertexBuffer, unsigned int* indexBuffer, int i, vec3<float> barycentricCoords) {
 
@@ -51,6 +70,17 @@ __device__ vec2<float> getBarycentricUVs(float* vertexBuffer, unsigned int* inde
     return uv1 * barycentricCoords.x + uv2 * barycentricCoords.y + uv3 * barycentricCoords.z;
 }
 
+__device__ vec2<float> getSkyUVs(Ray<float> ray) {
+
+    float theta = acosf(ray.direction.y);
+    float phi = atan2f(ray.direction.z, ray.direction.x);
+
+    float u = phi / (2.0f * M_PI);
+    float v = 1.0f - (theta / M_PI);
+
+    return { u, v };
+}
+
 __device__ void setPixel(uint8_t* frameBuffer, int x, int y, int width, const vec3<unsigned char>& color) {
 
     frameBuffer[3 * (x + y * width)    ] = color.r;
@@ -58,28 +88,27 @@ __device__ void setPixel(uint8_t* frameBuffer, int x, int y, int width, const ve
     frameBuffer[3 * (x + y * width) + 2] = color.b;
 }
 
-__global__ void kernel_fragment(uint8_t* frameBuffer, unsigned int width, unsigned int height, 
-    float* vertexBuffer, size_t vertexSize, unsigned int *indexBuffer, size_t indexSize) {
+__global__ void kernel_fragment(KernelFragmentParams params) {
 
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
 
-    if (x >= width || y >= height) {
+    if (x >= params.width || y >= params.height) {
         return;
     }
 
     // Ray casting
-    Ray<float> ray = Ray<float>::castRay(x, y, width, height);
+    Ray<float> ray = Ray<float>::castRay(x, y, params.width, params.height);
     float distance = INFINITY;
     bool missed = true;
 
     // Ray intersections
-    int count = indexSize / sizeof(unsigned int);
+    int count = params.indexSize / sizeof(unsigned int);
     for(int i = 0; i < count; i += 3) {
 
-        vec3<float> X = getAttributes3(vertexBuffer, indexBuffer, i, ATTRIBUTE_X); // v1x v2x v3x
-        vec3<float> Y = getAttributes3(vertexBuffer, indexBuffer, i, ATTRIBUTE_Y); // v1y v2y v3y
-        vec3<float> Z = getAttributes3(vertexBuffer, indexBuffer, i, ATTRIBUTE_Z); // v1z v2z v3z
+        vec3<float> X = getAttributes3(params.vertexBuffer, params.indexBuffer, i, ATTRIBUTE_X); // v1x v2x v3x
+        vec3<float> Y = getAttributes3(params.vertexBuffer, params.indexBuffer, i, ATTRIBUTE_Y); // v1y v2y v3y
+        vec3<float> Z = getAttributes3(params.vertexBuffer, params.indexBuffer, i, ATTRIBUTE_Z); // v1z v2z v3z
 
         vec3<float> v1 = { X.x, Y.x, Z.x };
         vec3<float> v2 = { X.y, Y.y, Z.y };
@@ -95,9 +124,9 @@ __global__ void kernel_fragment(uint8_t* frameBuffer, unsigned int width, unsign
 
             vec3<float> barycentricCoords = barycentric<float>(hitInfo.intersection, triangle);
 
-            vec3<float> c = getBarycentricColor(vertexBuffer, indexBuffer, i, barycentricCoords);
-            vec3<float> n = getBarycentricNormal(vertexBuffer, indexBuffer, i, barycentricCoords); // Not used for the moment
-            vec2<float> uvs = getBarycentricUVs(vertexBuffer, indexBuffer, i, barycentricCoords);
+            vec3<float> c = getBarycentricColor(params.vertexBuffer, params.indexBuffer, i, barycentricCoords);
+            vec3<float> n = getBarycentricNormal(params.vertexBuffer, params.indexBuffer, i, barycentricCoords); // Not used for the moment
+            vec2<float> uvs = getBarycentricUVs(params.vertexBuffer, params.indexBuffer, i, barycentricCoords);
 
             vec3<float> lightDirection = vec3<float>(-0.5f, 1.0f, -1.f);
             lightDirection = lightDirection / lightDirection.module();
@@ -113,13 +142,24 @@ __global__ void kernel_fragment(uint8_t* frameBuffer, unsigned int width, unsign
                 static_cast<unsigned char>(outputColor.z * 255),
             };
 
-            setPixel(frameBuffer, x, y, width, pixelColor);
+            setPixel(params.frameBuffer, x, y, params.width, pixelColor);
         }
     }
 
     // Miss function
     if(missed) {
-        setPixel(frameBuffer, x, y, width, vec3<unsigned char>(0, 0, 0));
+
+        vec3<unsigned char> pixelColor(0, 0, 0);
+
+        if(params.hasSky) {
+
+            vec2<float> skyUVs = getSkyUVs(ray);
+            float4 texValue = tex2D<float4>(params.skyTextureObj, skyUVs.x, skyUVs.y);
+
+            pixelColor = { texValue.x * 255, texValue.y * 255, texValue.z * 255 };
+        }
+
+        setPixel(params.frameBuffer, x, y, params.width, pixelColor);
     }
 }
 

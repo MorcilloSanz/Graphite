@@ -28,7 +28,7 @@ public:
 
     inline cudaResourceDesc& getResourceDesc() { return resDesc; }
     inline cudaTextureDesc& getTextureDesc() { return texDesc; }
-    inline cudaTextureObject_t& getTextureObject() { return texObj; }
+    inline cudaTextureObject_t getTextureObject() { return texObj; }
 };
 
 }
