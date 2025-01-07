@@ -98,7 +98,7 @@ __global__ void kernel_fragment(KernelFragmentParams params) {
     }
 
     // Ray casting
-    Ray<float> ray = Ray<float>::castRay(x, y, params.width, params.height);
+    Ray<float> ray = Ray<float>::castRayPerspective(x, y, params.width, params.height, 60);
     float distance = INFINITY;
     bool missed = true;
 
@@ -128,12 +128,10 @@ __global__ void kernel_fragment(KernelFragmentParams params) {
             vec3<float> n = getBarycentricNormal(params.vertexBuffer, params.indexBuffer, i, barycentricCoords); // Not used for the moment
             vec2<float> uvs = getBarycentricUVs(params.vertexBuffer, params.indexBuffer, i, barycentricCoords);
 
-            vec3<float> lightDirection = vec3<float>(-0.5f, 1.0f, -1.f);
-            lightDirection = lightDirection / lightDirection.module();
-
+            vec3<float> lightDirection = vec3<float>(-0.5f, 1.0f, -1.f).normalize();
             float intensity = max(0.f, lightDirection.dot(hitInfo.normal * -1));
 
-            vec3<float> lightColor = vec3<float>(1.0f, 0.9f, 0.7f);
+            vec3<float> lightColor = vec3<float>(1.0f, 0.9f, 0.9f);
             vec3<float> outputColor = c * intensity * lightColor;
 
             vec3<unsigned char> pixelColor = {

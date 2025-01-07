@@ -120,7 +120,7 @@ struct Ray {
      * @param height Screen height in pixels.
      * @return A Ray<T> representing the ray's origin and direction.
      */
-    __device__ static Ray<T> castRay(int x, int y, unsigned int width, unsigned int height) {
+    __device__ static Ray<T> castRayOrtho(int x, int y, unsigned int width, unsigned int height) {
 
         T aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 
@@ -131,6 +131,43 @@ struct Ray {
         };
 
         vec3<T> direction = { 0.0f, 0.0f, -1.0f };
+        Ray<T> ray(origin, direction);
+
+        return ray;
+    }
+
+    /**
+     * Casts a ray from a screen coordinate (x, y) into 3D space.
+     *
+     * @tparam T Data type for the ray components.
+     * @param x Horizontal screen coordinate.
+     * @param y Vertical screen coordinate.
+     * @param width Screen width in pixels.
+     * @param height Screen height in pixels.
+     * @param fovy fovy in degrees.
+     * @return A Ray<T> representing the ray's origin and direction.
+     */
+    __device__ static Ray<T> castRayPerspective(int x, int y, unsigned int width, unsigned int height, float fovy) {
+
+        vec3<T> cameraPos = { 0.0, 0.0, 2.0 };
+        vec3<T> cameraTarget = { 0.0, 0.0, 0.0 };
+        vec3<T> cameraUp = { 0.0, 1.0, 0.0 };
+
+        vec3<T> forward = (cameraTarget - cameraPos).normalize();
+        vec3<T> right = forward.cross(cameraUp).normalize();
+        vec3<T> up = right.cross(forward);
+
+        vec2<T> imageSize = { static_cast<T>(width), static_cast<T>(height) };
+        vec2<T> ndc = { 2.0 * x / width - 1.0, 1.0 - 2.0 * y / height };
+
+        T fov = fovy * M_PI / 180;
+        T aspectRatio = static_cast<T>(width) / static_cast<T>(height);
+
+        T imagePlaneX = ndc.x * aspectRatio * tan(fov / 2.0);
+        T imagePlaneY = ndc.y * tan(fov / 2.0);
+
+        vec3<T> origin = cameraPos;
+        vec3<T> direction = (right * imagePlaneX + up * imagePlaneY + forward).normalize();
         Ray<T> ray(origin, direction);
 
         return ray;

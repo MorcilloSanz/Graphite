@@ -57,6 +57,12 @@ struct vec2 {
         return sqrt(x * x + y * y);
     }
 
+    __host__ __device__ vec2 normalize() const {
+        T norm = module();
+        if (norm == 0) return vec2(0, 0);
+        return vec2(x / norm, y / norm);
+    }
+
     // Operators
     __host__ __device__ vec2 operator+(const vec2& vec) const {
         return sum(vec);
@@ -140,6 +146,12 @@ struct vec3 {
 
     __host__ __device__ T module() const {
         return sqrt(x * x + y * y + z * z);
+    }
+
+    __host__ __device__ vec3 normalize() const {
+        T norm = module();
+        if (norm == 0) return vec3(0, 0, 0);
+        return vec3(x / norm, y / norm, z / norm);
     }
 
     __host__ __device__ vec2<T> xy() const {
@@ -226,6 +238,12 @@ struct vec4 {
 
     __host__ __device__ T module() const {
         return sqrt(x * x + y * y + z * z + w * w);
+    }
+
+    __host__ __device__ vec4 normalize() const {
+        T norm = module();
+        if (norm == 0) return vec4(0, 0, 0, 0);
+        return vec4(x / norm, y / norm, z / norm, w / norm);
     }
 
     __host__ __device__ vec3<T> xyz() const {
