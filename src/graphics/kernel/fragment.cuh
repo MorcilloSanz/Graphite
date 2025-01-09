@@ -71,13 +71,19 @@ __device__ vec2<float> getBarycentricUVs(float* vertexBuffer, unsigned int* inde
 
 __device__ vec2<float> getSkyUVs(Ray<float> ray) {
 
-    float theta = acosf(ray.direction.y);
+    float theta = acosf(fmaxf(-1.0f, fminf(ray.direction.y, 1.0f))); // Clampea el valor entre [-1, 1]
     float phi = atan2f(ray.direction.z, ray.direction.x);
 
-    float u = phi / (2.0f * M_PI);
+    // Ajustar el rango de phi de [-π, π] a [0, 1]
+    float u = (phi + M_PI) / (2.0f * M_PI);
     float v = 1.0f - (theta / M_PI);
 
     return { u, v };
+}
+
+__device__ vec3<float> tex(cudaTextureObject_t texObj, float u, float v) {
+    float4 texValue = tex2D<float4>(texObj, u, v);
+    return vec3<float>(texValue.x, texValue.y, texValue.z);
 }
 
 __device__ void setPixel(uint8_t* frameBuffer, int x, int y, int width, const vec3<unsigned char>& color) {
@@ -150,10 +156,10 @@ __global__ void kernel_fragment(KernelFragmentParams params) {
 
         if(params.hasSky) {
 
-            vec2<float> skyUVs = getSkyUVs(ray);
-            float4 texValue = tex2D<float4>(params.skyTextureObj, skyUVs.x, skyUVs.y);
+            vec2<float> uvs = getSkyUVs(ray);
+            vec3<float> sky = tex(params.skyTextureObj, uvs.u, uvs.v);
 
-            pixelColor = { texValue.x * 255, texValue.y * 255, texValue.z * 255 };
+            pixelColor = { static_cast<unsigned char>(sky.r * 255), static_cast<unsigned char>(sky.g * 255), static_cast<unsigned char>(sky.b * 255) };
         }
 
         setPixel(params.frameBuffer, x, y, params.width, pixelColor);

@@ -52,19 +52,21 @@ int main() {
     Buffer<unsigned int> indexBuffer(indices, sizeof(indices));
 
     // Sky
-    int skyWidth, skyHeight, skyBpp;
-    unsigned char* skyData = stbi_load("c:/Users/amorc/Desktop/sky.png", &skyWidth, &skyHeight, &skyBpp, STBI_rgb_alpha);
+    int skyWidth, skyHeight, skyChannels;
 
-    Texture sky(skyData, width, height);
+    stbi_set_flip_vertically_on_load(1);
+    unsigned char* skyData = stbi_load("C:/Users/amorc/Desktop/sky.png", &skyWidth, &skyHeight, &skyChannels, STBI_rgb_alpha);
+
+    Texture sky(skyData, skyWidth, skyHeight);
     renderer.setSky(sky);
 
     stbi_image_free(skyData);
-    
+
     // Draw call
     renderer.clear();
 
     mat4<float> model = rotationX<float>(M_PI / 5) * rotationY<float>(M_PI / 5);
-    mat4<float> view = scale<float>(vec3<float>(0.75f));
+    mat4<float> view = scale<float>(vec3<float>(0.9f));
 
     Uniforms uniforms(model, view);
     renderer.setUniforms(uniforms);
