@@ -67,7 +67,6 @@ set(CUDA_HEADERS
     src/math/linalg.cuh
     src/math/transform.cuh
     src/math/geometry.cuh
-    src/model/model.cuh
 )
 
 # Source Files
@@ -80,7 +79,6 @@ set(CUDA_SOURCES
     src/graphics/buffer.cu
     src/graphics/texture.cu
     src/graphics/renderer.cu
-    #src/model/model.cu
 )
 
 # Add CUDA executable
