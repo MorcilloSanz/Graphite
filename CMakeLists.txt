@@ -41,6 +41,12 @@ set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 # ASSIMP
 find_package(assimp REQUIRED)
 
+if(NOT assimp_FOUND)
+    message(FATAL_ERROR "Assimp library not found!")
+else()
+    message(STATUS "Assimp found: ${assimp_DIR}")
+endif()
+
 # Include src
 include_directories(src)
 
@@ -61,6 +67,7 @@ set(CUDA_HEADERS
     src/math/linalg.cuh
     src/math/transform.cuh
     src/math/geometry.cuh
+    src/model/model.cuh
 )
 
 # Source Files
@@ -73,6 +80,7 @@ set(CUDA_SOURCES
     src/graphics/buffer.cu
     src/graphics/texture.cu
     src/graphics/renderer.cu
+    #src/model/model.cu
 )
 
 # Add CUDA executable

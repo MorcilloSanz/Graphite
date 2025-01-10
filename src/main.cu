@@ -13,6 +13,8 @@
 #include "math/linalg.cuh"
 #include "math/transform.cuh"
 
+#include "model/model.cuh"
+
 using namespace gph;
 
 int main() {
@@ -40,7 +42,7 @@ int main() {
          0.0f,  0.5f,  0.0f,  1.0f, 0.5f, 0.5f,  0.0f, 1.0f,  0.0f,  0.5f, 0.5f
     };
 
-    Buffer<float> vertexBuffer(vertices, sizeof(vertices));
+    Buffer<float>::Ptr vertexBuffer = Buffer<float>::New(vertices, sizeof(vertices));
 
     // Index buffer
     unsigned int indices[] = {
@@ -49,7 +51,7 @@ int main() {
         0, 1, 2, 0, 2, 3
     };
     
-    Buffer<unsigned int> indexBuffer(indices, sizeof(indices));
+    Buffer<unsigned int>::Ptr indexBuffer = Buffer<unsigned int>::New(indices, sizeof(indices));
 
     // Sky
     int skyWidth, skyHeight, skyChannels;
@@ -62,21 +64,24 @@ int main() {
 
     stbi_image_free(skyData);
 
+    // Model
+    //Model::Ptr model = Model::New("C:/Users/amorc/Desktop/silent_ash/scene.gltf");
+
     // Draw call
     renderer.clear();
 
-    mat4<float> model = rotationX<float>(M_PI / 5) * rotationY<float>(M_PI / 5);
-    mat4<float> view = scale<float>(vec3<float>(0.9f));
+    mat4<float> modelMatrix = rotationX<float>(M_PI / 5) * rotationY<float>(M_PI / 5);
+    mat4<float> viewMatrix = scale<float>(vec3<float>(0.9f));
 
-    Uniforms uniforms(model, view);
+    Uniforms uniforms(modelMatrix, viewMatrix);
     renderer.setUniforms(uniforms);
 
     renderer.draw(vertexBuffer, indexBuffer);
 
     // CPU image
-    uint8_t* bufferCPU = new uint8_t[renderer.getFrameBuffer().size];
+    uint8_t* bufferCPU = new uint8_t[renderer.getFrameBuffer()->size];
 
-    cudaMemcpy(bufferCPU, renderer.getFrameBuffer().buff, renderer.getFrameBuffer().size, cudaMemcpyDeviceToHost);
+    cudaMemcpy(bufferCPU, renderer.getFrameBuffer()->buff, renderer.getFrameBuffer()->size, cudaMemcpyDeviceToHost);
     stbi_write_png("output.png", width, height, STBI_rgb, bufferCPU, width * STBI_rgb);
     
     delete[] bufferCPU;

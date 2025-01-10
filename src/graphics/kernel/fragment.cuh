@@ -7,11 +7,20 @@
 
 #include "graphics/buffer.cuh"
 #include "graphics/texture.cuh"
-#include "attributes.cuh"
+#include "graphics/material.cuh"
 
+#include "attributes.cuh"
 
 namespace gph 
 {
+
+struct KernelMaterial {
+    cudaTextureObject_t albedo;
+    cudaTextureObject_t roughness;
+    cudaTextureObject_t metallic;
+    cudaTextureObject_t normal;
+    cudaTextureObject_t emission;
+};
 
 struct KernelFragmentParams {
 
@@ -27,54 +36,63 @@ struct KernelFragmentParams {
 
     cudaTextureObject_t skyTextureObj;
     bool hasSky;
+
+    KernelMaterial material;
 };
 
-__device__ vec3<float> getBarycentricColor(float* vertexBuffer, unsigned int* indexBuffer, int i, vec3<float> barycentricCoords) {
+__device__ vec3<float> getBarycentricInterpolation3(float* vertexBuffer, unsigned int* indexBuffer, 
+    int i, vec3<float> barycentricCoords, int attribute) {
 
-    vec3<float> R = getAttributes3(vertexBuffer, indexBuffer, i, ATTRIBUTE_R); // c1r c2r c3r
-    vec3<float> G = getAttributes3(vertexBuffer, indexBuffer, i, ATTRIBUTE_G); // c1g c2g c3g
-    vec3<float> B = getAttributes3(vertexBuffer, indexBuffer, i, ATTRIBUTE_B); // c1b c2b c3b
+    vec3<float> A1 = getAttributes3(vertexBuffer, indexBuffer, i, attribute);     // v1x v2x v3x
+    vec3<float> A2 = getAttributes3(vertexBuffer, indexBuffer, i, attribute + 1); // v1y v2y v3y
+    vec3<float> A3 = getAttributes3(vertexBuffer, indexBuffer, i, attribute + 2); // v1z v2z v3z
 
-    vec3<float> c1 = { R.x, G.x, B.x };
-    vec3<float> c2 = { R.y, G.y, B.y };
-    vec3<float> c3 = { R.z, G.z, B.z };
+    vec3<float> a1 = { A1.x, A2.x, A3.x };
+    vec3<float> a2 = { A1.y, A2.y, A3.y };
+    vec3<float> a3 = { A1.z, A2.z, A3.z };
 
-    return c1 * barycentricCoords.x + c2 * barycentricCoords.y + c3 * barycentricCoords.z;
+    return a1 * barycentricCoords.x + a2 * barycentricCoords.y + a3 * barycentricCoords.z;
 }
 
-__device__ vec3<float> getBarycentricNormal(float* vertexBuffer, unsigned int* indexBuffer, int i, vec3<float> barycentricCoords) {
+__device__ vec2<float> getBarycentricInterpolation2(float* vertexBuffer, unsigned int* indexBuffer, 
+    int i, vec3<float> barycentricCoords, int attribute) {
 
-    vec3<float> NX = getAttributes3(vertexBuffer, indexBuffer, i, ATTRIBUTE_NX); // n1x n2x n3x
-    vec3<float> NY = getAttributes3(vertexBuffer, indexBuffer, i, ATTRIBUTE_NY); // n1y n2y n3y
-    vec3<float> NZ = getAttributes3(vertexBuffer, indexBuffer, i, ATTRIBUTE_NZ); // n1z n2z n3z
+    vec3<float> A1 = getAttributes3(vertexBuffer, indexBuffer, i, attribute);     // uv1x uv2x uv3x
+    vec3<float> A2 = getAttributes3(vertexBuffer, indexBuffer, i, attribute + 1); // uv1y uv2y uv3y
 
-    vec3<float> n1 = { NX.x, NY.x, NZ.x };
-    vec3<float> n2 = { NX.y, NY.y, NZ.y };
-    vec3<float> n3 = { NX.z, NY.z, NZ.z };
+    vec2<float> a1 = { A1.x, A2.x };
+    vec2<float> a2 = { A1.y, A2.y };
+    vec2<float> a3 = { A1.z, A2.z };
 
-    vec3<float> n = n1 * barycentricCoords.x + n2 * barycentricCoords.y + n3 * barycentricCoords.z;
-
-    return n.normalize();
+    return a1 * barycentricCoords.x + a2 * barycentricCoords.y + a3 * barycentricCoords.z;
 }
 
-__device__ vec2<float> getBarycentricUVs(float* vertexBuffer, unsigned int* indexBuffer, int i, vec3<float> barycentricCoords) {
+__device__ vec3<float> getBarycentricColor(float* vertexBuffer, unsigned int* indexBuffer, 
+    int i, vec3<float> barycentricCoords) {
 
-    vec3<float> UVX = getAttributes3(vertexBuffer, indexBuffer, i, ATTRIBUTE_UVX); // uv1x uv2x uv3x
-    vec3<float> UVY = getAttributes3(vertexBuffer, indexBuffer, i, ATTRIBUTE_UVY); // uv1y uv2y uv3y
+    return getBarycentricInterpolation3(vertexBuffer, indexBuffer, i, 
+        barycentricCoords, ATTRIBUTE_R);
+}
 
-    vec2<float> uv1 = { UVX.x, UVY.x };
-    vec2<float> uv2 = { UVX.y, UVY.y };
-    vec2<float> uv3 = { UVX.z, UVY.z };
+__device__ vec3<float> getBarycentricNormal(float* vertexBuffer, unsigned int* indexBuffer, 
+    int i, vec3<float> barycentricCoords) {
 
-    return uv1 * barycentricCoords.x + uv2 * barycentricCoords.y + uv3 * barycentricCoords.z;
+    return getBarycentricInterpolation3(vertexBuffer, indexBuffer, i, 
+        barycentricCoords, ATTRIBUTE_NX).normalize();
+}
+
+__device__ vec2<float> getBarycentricUVs(float* vertexBuffer, unsigned int* indexBuffer, 
+    int i, vec3<float> barycentricCoords) {
+
+    return getBarycentricInterpolation2(vertexBuffer, indexBuffer, i, 
+        barycentricCoords, ATTRIBUTE_UVX);
 }
 
 __device__ vec2<float> getSkyUVs(Ray<float> ray) {
 
-    float theta = acosf(fmaxf(-1.0f, fminf(ray.direction.y, 1.0f))); // Clampea el valor entre [-1, 1]
+    float theta = acosf(fmaxf(-1.0f, fminf(ray.direction.y, 1.0f)));
     float phi = atan2f(ray.direction.z, ray.direction.x);
 
-    // Ajustar el rango de phi de [-π, π] a [0, 1]
     float u = (phi + M_PI) / (2.0f * M_PI);
     float v = 1.0f - (theta / M_PI);
 

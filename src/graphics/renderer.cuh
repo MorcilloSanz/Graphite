@@ -26,7 +26,7 @@ struct Uniforms {
 
 class Renderer {
 private:
-    FrameBuffer frameBuffer;
+    FrameBuffer::Ptr frameBuffer;
     Uniforms<float> uniforms;
     Texture sky;
     bool hasSky;
@@ -35,17 +35,17 @@ public:
     Renderer() = default;
     ~Renderer() = default;
 private:
-    void vertexShader(const Buffer<float>& vertexBuffer, const Buffer<unsigned int>& indexBuffer);
-    void fragmentShader(const Buffer<float>& vertexBuffer, const Buffer<unsigned int>& indexBuffer);
+    void vertexShader(Buffer<float>::Ptr vertexBuffer, Buffer<unsigned int>::Ptr indexBuffer);
+    void fragmentShader(Buffer<float>::Ptr vertexBuffer, Buffer<unsigned int>::Ptr indexBuffer);
 public:
     void setSky(const Texture& sky);
-    void draw(const Buffer<float>& vertexBuffer, const Buffer<unsigned int>& indexBuffer);
+    void draw(Buffer<float>::Ptr vertexBuffer, Buffer<unsigned int>::Ptr indexBuffer);
     void clear();
 public:
     inline void setUniforms(const Uniforms<float>& uniforms) { this->uniforms = uniforms; }
     inline const Uniforms<float>& getUniforms() { return uniforms; }
 
-    inline FrameBuffer& getFrameBuffer() { return frameBuffer; }
+    inline FrameBuffer::Ptr getFrameBuffer() { return frameBuffer; }
 };
 
 }
