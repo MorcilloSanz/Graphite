@@ -13,8 +13,6 @@
 #include "math/linalg.cuh"
 #include "math/transform.cuh"
 
-#include "model/model.cuh"
-
 using namespace gph;
 
 int main() {
@@ -63,9 +61,6 @@ int main() {
     renderer.setSky(sky);
 
     stbi_image_free(skyData);
-
-    // Model
-    //Model::Ptr model = Model::New("C:/Users/amorc/Desktop/silent_ash/scene.gltf");
 
     // Draw call
     renderer.clear();
