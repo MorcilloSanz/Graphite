@@ -5,10 +5,13 @@
 
 #include <cuda_runtime.h>
 
+#include "shared.cuh"
+
 namespace gph
 {
 
 class Texture {
+    SHARED_PTR(Texture)
 private:
     uint8_t* data;
     size_t width, height;

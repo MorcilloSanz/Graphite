@@ -57,16 +57,20 @@ set(CXX_HEADERS
 )
 
 set(CUDA_HEADERS
+    src/shared.cuh
     src/graphics/buffer.cuh
     src/graphics/texture.cuh
     src/graphics/material.cuh
     src/graphics/renderer.cuh
+    src/graphics/kernel/kernel.cuh
     src/graphics/kernel/attributes.cuh
     src/graphics/kernel/fragment.cuh
     src/graphics/kernel/vertex.cuh
     src/math/linalg.cuh
     src/math/transform.cuh
     src/math/geometry.cuh
+    src/scene/scene.cuh
+    src/scene/bvh.cuh
 )
 
 # Source Files
@@ -79,6 +83,8 @@ set(CUDA_SOURCES
     src/graphics/buffer.cu
     src/graphics/texture.cu
     src/graphics/renderer.cu
+    src/scene/scene.cu
+    src/scene/bvh.cuh
 )
 
 # Add CUDA executable

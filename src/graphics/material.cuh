@@ -7,17 +7,10 @@ namespace gph
 {
 
 struct Material {
-    vec3<float> albedo;
-    float roughness;
-    float metallic;
-    vec3<float> emission;
-};
-
-struct TextureMaterial {
-    Texture albedo;
-    Texture roughness;
-    Texture metallic;
-    Texture emission;
+    Texture::Ptr albedo;
+    Texture::Ptr roughness;
+    Texture::Ptr metallic;
+    Texture::Ptr emission;
 };
 
 }

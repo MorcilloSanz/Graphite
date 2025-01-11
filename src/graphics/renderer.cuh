@@ -28,7 +28,7 @@ class Renderer {
 private:
     FrameBuffer::Ptr frameBuffer;
     Uniforms<float> uniforms;
-    Texture sky;
+    Texture::Ptr sky;
     bool hasSky;
 public:
     Renderer(unsigned int width, unsigned int height);
@@ -38,7 +38,7 @@ private:
     void vertexShader(Buffer<float>::Ptr vertexBuffer, Buffer<unsigned int>::Ptr indexBuffer);
     void fragmentShader(Buffer<float>::Ptr vertexBuffer, Buffer<unsigned int>::Ptr indexBuffer);
 public:
-    void setSky(const Texture& sky);
+    void setSky(Texture::Ptr sky);
     void draw(Buffer<float>::Ptr vertexBuffer, Buffer<unsigned int>::Ptr indexBuffer);
     void clear();
 public:

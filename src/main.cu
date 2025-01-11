@@ -28,9 +28,6 @@ int main() {
     
     Renderer renderer(width, height);
 
-    size_t framebufferMem = sizeof(uint8_t) * width * height * 3;
-    std::cout << "Frame Buffer Mem (GPU): " << static_cast<float>(framebufferMem) / (1024 * 1024) << "MB" << std::endl;
-
     // Vertex Buffer: x y z r g b nx ny nz uvx uvy
     float vertices[] = {
         -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f, -1.0f,  0.0f, 0.0f,
@@ -57,7 +54,7 @@ int main() {
     stbi_set_flip_vertically_on_load(1);
     unsigned char* skyData = stbi_load("C:/Users/amorc/Desktop/sky.png", &skyWidth, &skyHeight, &skyChannels, STBI_rgb_alpha);
 
-    Texture sky(skyData, skyWidth, skyHeight);
+    Texture::Ptr sky = Texture::New(skyData, skyWidth, skyHeight);
     renderer.setSky(sky);
 
     stbi_image_free(skyData);
@@ -67,10 +64,9 @@ int main() {
 
     mat4<float> modelMatrix = rotationX<float>(M_PI / 5) * rotationY<float>(M_PI / 5);
     mat4<float> viewMatrix = scale<float>(vec3<float>(0.9f));
-
     Uniforms uniforms(modelMatrix, viewMatrix);
-    renderer.setUniforms(uniforms);
 
+    renderer.setUniforms(uniforms);
     renderer.draw(vertexBuffer, indexBuffer);
 
     // CPU image

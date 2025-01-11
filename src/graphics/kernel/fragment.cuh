@@ -9,43 +9,17 @@
 #include "graphics/texture.cuh"
 #include "graphics/material.cuh"
 
+#include "kernel.cuh"
 #include "attributes.cuh"
 
 namespace gph 
 {
 
-struct KernelMaterial {
-    cudaTextureObject_t albedo;
-    cudaTextureObject_t roughness;
-    cudaTextureObject_t metallic;
-    cudaTextureObject_t normal;
-    cudaTextureObject_t emission;
-};
+__device__ vec3<float> getBarycentricInterpolation3(KernelFragmentParams params, int i, vec3<float> barycentricCoords, int attribute) {
 
-struct KernelFragmentParams {
-
-    uint8_t* frameBuffer;
-    unsigned int width;
-    unsigned int height;
-
-    float* vertexBuffer;
-    size_t vertexSize;
-    
-    unsigned int* indexBuffer;
-    size_t indexSize;
-
-    cudaTextureObject_t skyTextureObj;
-    bool hasSky;
-
-    KernelMaterial material;
-};
-
-__device__ vec3<float> getBarycentricInterpolation3(float* vertexBuffer, unsigned int* indexBuffer, 
-    int i, vec3<float> barycentricCoords, int attribute) {
-
-    vec3<float> A1 = getAttributes3(vertexBuffer, indexBuffer, i, attribute);     // v1x v2x v3x
-    vec3<float> A2 = getAttributes3(vertexBuffer, indexBuffer, i, attribute + 1); // v1y v2y v3y
-    vec3<float> A3 = getAttributes3(vertexBuffer, indexBuffer, i, attribute + 2); // v1z v2z v3z
+    vec3<float> A1 = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, attribute);     // v1x v2x v3x
+    vec3<float> A2 = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, attribute + 1); // v1y v2y v3y
+    vec3<float> A3 = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, attribute + 2); // v1z v2z v3z
 
     vec3<float> a1 = { A1.x, A2.x, A3.x };
     vec3<float> a2 = { A1.y, A2.y, A3.y };
@@ -54,11 +28,10 @@ __device__ vec3<float> getBarycentricInterpolation3(float* vertexBuffer, unsigne
     return a1 * barycentricCoords.x + a2 * barycentricCoords.y + a3 * barycentricCoords.z;
 }
 
-__device__ vec2<float> getBarycentricInterpolation2(float* vertexBuffer, unsigned int* indexBuffer, 
-    int i, vec3<float> barycentricCoords, int attribute) {
+__device__ vec2<float> getBarycentricInterpolation2(KernelFragmentParams params, int i, vec3<float> barycentricCoords, int attribute) {
 
-    vec3<float> A1 = getAttributes3(vertexBuffer, indexBuffer, i, attribute);     // uv1x uv2x uv3x
-    vec3<float> A2 = getAttributes3(vertexBuffer, indexBuffer, i, attribute + 1); // uv1y uv2y uv3y
+    vec3<float> A1 = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, attribute);     // uv1x uv2x uv3x
+    vec3<float> A2 = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, attribute + 1); // uv1y uv2y uv3y
 
     vec2<float> a1 = { A1.x, A2.x };
     vec2<float> a2 = { A1.y, A2.y };
@@ -67,25 +40,16 @@ __device__ vec2<float> getBarycentricInterpolation2(float* vertexBuffer, unsigne
     return a1 * barycentricCoords.x + a2 * barycentricCoords.y + a3 * barycentricCoords.z;
 }
 
-__device__ vec3<float> getBarycentricColor(float* vertexBuffer, unsigned int* indexBuffer, 
-    int i, vec3<float> barycentricCoords) {
-
-    return getBarycentricInterpolation3(vertexBuffer, indexBuffer, i, 
-        barycentricCoords, ATTRIBUTE_R);
+__device__ vec3<float> getBarycentricColor(KernelFragmentParams params, int i, vec3<float> barycentricCoords) {
+    return getBarycentricInterpolation3(params, i, barycentricCoords, ATTRIBUTE_R);
 }
 
-__device__ vec3<float> getBarycentricNormal(float* vertexBuffer, unsigned int* indexBuffer, 
-    int i, vec3<float> barycentricCoords) {
-
-    return getBarycentricInterpolation3(vertexBuffer, indexBuffer, i, 
-        barycentricCoords, ATTRIBUTE_NX).normalize();
+__device__ vec3<float> getBarycentricNormal(KernelFragmentParams params, int i, vec3<float> barycentricCoords) {
+    return getBarycentricInterpolation3(params, i, barycentricCoords, ATTRIBUTE_NX).normalize();
 }
 
-__device__ vec2<float> getBarycentricUVs(float* vertexBuffer, unsigned int* indexBuffer, 
-    int i, vec3<float> barycentricCoords) {
-
-    return getBarycentricInterpolation2(vertexBuffer, indexBuffer, i, 
-        barycentricCoords, ATTRIBUTE_UVX);
+__device__ vec2<float> getBarycentricUVs(KernelFragmentParams params, int i, vec3<float> barycentricCoords) {
+    return getBarycentricInterpolation2(params, i, barycentricCoords, ATTRIBUTE_UVX);
 }
 
 __device__ vec2<float> getSkyUVs(Ray<float> ray) {
@@ -105,7 +69,6 @@ __device__ vec3<float> tex(cudaTextureObject_t texObj, float u, float v) {
 }
 
 __device__ void setPixel(uint8_t* frameBuffer, int x, int y, int width, const vec3<unsigned char>& color) {
-
     frameBuffer[3 * (x + y * width)    ] = color.r;
     frameBuffer[3 * (x + y * width) + 1] = color.g;
     frameBuffer[3 * (x + y * width) + 2] = color.b;
@@ -116,22 +79,22 @@ __global__ void kernel_fragment(KernelFragmentParams params) {
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
 
-    if (x >= params.width || y >= params.height) {
+    if (x >= params.frameBuffer.width || y >= params.frameBuffer.height) {
         return;
     }
 
     // Ray casting
-    Ray<float> ray = Ray<float>::castRayPerspective(x, y, params.width, params.height, 60);
+    Ray<float> ray = Ray<float>::castRayPerspective(x, y, params.frameBuffer.width, params.frameBuffer.height, 60);
     float distance = INFINITY;
     bool missed = true;
 
     // Ray intersections
-    int count = params.indexSize / sizeof(unsigned int);
+    int count = params.indexBuffer.size / sizeof(unsigned int);
     for(int i = 0; i < count; i += 3) {
 
-        vec3<float> X = getAttributes3(params.vertexBuffer, params.indexBuffer, i, ATTRIBUTE_X); // v1x v2x v3x
-        vec3<float> Y = getAttributes3(params.vertexBuffer, params.indexBuffer, i, ATTRIBUTE_Y); // v1y v2y v3y
-        vec3<float> Z = getAttributes3(params.vertexBuffer, params.indexBuffer, i, ATTRIBUTE_Z); // v1z v2z v3z
+        vec3<float> X = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, ATTRIBUTE_X); // v1x v2x v3x
+        vec3<float> Y = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, ATTRIBUTE_Y); // v1y v2y v3y
+        vec3<float> Z = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, ATTRIBUTE_Z); // v1z v2z v3z
 
         vec3<float> v1 = { X.x, Y.x, Z.x };
         vec3<float> v2 = { X.y, Y.y, Z.y };
@@ -147,9 +110,9 @@ __global__ void kernel_fragment(KernelFragmentParams params) {
 
             vec3<float> barycentricCoords = barycentric<float>(hitInfo.intersection, triangle);
 
-            vec3<float> c = getBarycentricColor(params.vertexBuffer, params.indexBuffer, i, barycentricCoords);
-            vec3<float> n = getBarycentricNormal(params.vertexBuffer, params.indexBuffer, i, barycentricCoords); // Not used for the moment
-            vec2<float> uvs = getBarycentricUVs(params.vertexBuffer, params.indexBuffer, i, barycentricCoords);
+            vec3<float> c = getBarycentricColor(params, i, barycentricCoords);
+            vec3<float> n = getBarycentricNormal(params, i, barycentricCoords); // Not used for the moment
+            vec2<float> uvs = getBarycentricUVs(params, i, barycentricCoords);
 
             vec3<float> lightDirection = vec3<float>(-0.5f, 1.0f, -1.f).normalize();
             float intensity = max(0.f, lightDirection.dot(hitInfo.normal * -1));
@@ -163,7 +126,7 @@ __global__ void kernel_fragment(KernelFragmentParams params) {
                 static_cast<unsigned char>(outputColor.z * 255),
             };
 
-            setPixel(params.frameBuffer, x, y, params.width, pixelColor);
+            setPixel(params.frameBuffer.buffer, x, y, params.frameBuffer.width, pixelColor);
         }
     }
 
@@ -172,15 +135,15 @@ __global__ void kernel_fragment(KernelFragmentParams params) {
 
         vec3<unsigned char> pixelColor(0, 0, 0);
 
-        if(params.hasSky) {
+        if(params.sky.hasTexture) {
 
             vec2<float> uvs = getSkyUVs(ray);
-            vec3<float> sky = tex(params.skyTextureObj, uvs.u, uvs.v);
+            vec3<float> sky = tex(params.sky.texture, uvs.u, uvs.v);
 
             pixelColor = { static_cast<unsigned char>(sky.r * 255), static_cast<unsigned char>(sky.g * 255), static_cast<unsigned char>(sky.b * 255) };
         }
 
-        setPixel(params.frameBuffer, x, y, params.width, pixelColor);
+        setPixel(params.frameBuffer.buffer, x, y, params.frameBuffer.width, pixelColor);
     }
 }
 
