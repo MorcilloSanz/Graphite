@@ -1,5 +1,7 @@
 #pragma once
 
+#include "math/linalg.cuh"
+
 namespace gph
 {
 
@@ -76,6 +78,15 @@ struct KernelFragmentParams {
 
     KernelTexture sky;
     KernelMaterial material;
+};
+
+struct KernelVertexParams {
+
+    KernelVertexBuffer vertexBuffer;
+    KernelIndexBuffer indexBuffer;
+
+    mat4<float> modelviewMatrix;
+    mat3<float> normalMatrix;
 };
 
 }

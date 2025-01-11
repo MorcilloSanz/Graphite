@@ -4,48 +4,49 @@
 #include "math/geometry.cuh"
 
 #include "graphics/buffer.cuh"
+
+#include "kernel.cuh"
 #include "attributes.cuh"
 
 namespace gph
 {
 
-__global__ void kernel_vertex(float* vertexBuffer, size_t vertexSize, unsigned int* indexBuffer, 
-    size_t indexSize, mat4<float> modelviewMatrix, mat3<float> normalMatrix) {
+__global__ void kernel_vertex(KernelVertexParams params) {
 
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     
-    int count = indexSize / sizeof(unsigned int);
+    int count = params.indexBuffer.size / sizeof(unsigned int);
     if (idx >= count)
         return;
     
     // transform vertex position
     vec4<float> position = {
-        getAttribute(vertexBuffer, indexBuffer, idx, ATTRIBUTE_X),
-        getAttribute(vertexBuffer, indexBuffer, idx, ATTRIBUTE_Y),
-        getAttribute(vertexBuffer, indexBuffer, idx, ATTRIBUTE_Z),
+        getAttribute(params.vertexBuffer.buffer, params.indexBuffer.buffer, idx, ATTRIBUTE_X),
+        getAttribute(params.vertexBuffer.buffer, params.indexBuffer.buffer, idx, ATTRIBUTE_Y),
+        getAttribute(params.vertexBuffer.buffer, params.indexBuffer.buffer, idx, ATTRIBUTE_Z),
         1.0f
     };
 
-    vec4<float> positionPrime = modelviewMatrix * position;
+    vec4<float> positionPrime = params.modelviewMatrix * position;
 
     // transform normal
     vec3<float> normal = {
-        getAttribute(vertexBuffer, indexBuffer, idx, ATTRIBUTE_NX),
-        getAttribute(vertexBuffer, indexBuffer, idx, ATTRIBUTE_NY),
-        getAttribute(vertexBuffer, indexBuffer, idx, ATTRIBUTE_NZ)
+        getAttribute(params.vertexBuffer.buffer, params.indexBuffer.buffer, idx, ATTRIBUTE_NX),
+        getAttribute(params.vertexBuffer.buffer, params.indexBuffer.buffer, idx, ATTRIBUTE_NY),
+        getAttribute(params.vertexBuffer.buffer, params.indexBuffer.buffer, idx, ATTRIBUTE_NZ)
     };
 
-    vec3<float> normalPrime = normalMatrix * normal;
+    vec3<float> normalPrime = params.normalMatrix * normal;
 
     // update position 
-    vertexBuffer[getAttributeIndex(indexBuffer, idx, ATTRIBUTE_X)] = positionPrime.x;
-    vertexBuffer[getAttributeIndex(indexBuffer, idx, ATTRIBUTE_Y)] = positionPrime.y;
-    vertexBuffer[getAttributeIndex(indexBuffer, idx, ATTRIBUTE_Z)] = positionPrime.z;
+    params.vertexBuffer.buffer[getAttributeIndex(params.indexBuffer.buffer, idx, ATTRIBUTE_X)] = positionPrime.x;
+    params.vertexBuffer.buffer[getAttributeIndex(params.indexBuffer.buffer, idx, ATTRIBUTE_Y)] = positionPrime.y;
+    params.vertexBuffer.buffer[getAttributeIndex(params.indexBuffer.buffer, idx, ATTRIBUTE_Z)] = positionPrime.z;
 
     // update normal
-    vertexBuffer[getAttributeIndex(indexBuffer, idx, ATTRIBUTE_NX)] = normalPrime.x;
-    vertexBuffer[getAttributeIndex(indexBuffer, idx, ATTRIBUTE_NY)] = normalPrime.y;
-    vertexBuffer[getAttributeIndex(indexBuffer, idx, ATTRIBUTE_NZ)] = normalPrime.z;
+    params.vertexBuffer.buffer[getAttributeIndex(params.indexBuffer.buffer, idx, ATTRIBUTE_NX)] = normalPrime.x;
+    params.vertexBuffer.buffer[getAttributeIndex(params.indexBuffer.buffer, idx, ATTRIBUTE_NY)] = normalPrime.y;
+    params.vertexBuffer.buffer[getAttributeIndex(params.indexBuffer.buffer, idx, ATTRIBUTE_NZ)] = normalPrime.z;
 }
 
 }
