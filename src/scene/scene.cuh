@@ -12,21 +12,18 @@ namespace gph
 class Scene {
     SHARED_PTR(Scene)
 private:
-    Buffer<float>::Ptr vertexBuffer;
-    Buffer<unsigned int>::Ptr indexBuffer;
-    Material material;
-    std::vector<Scene> children;
+    std::vector<Buffer<float>> vertexBuffers;
+    std::vector<Buffer<unsigned int>> indexBuffers;
+    std::vector<Material> materials;
 public:
-    Scene(Buffer<float>::Ptr _vertexBuffer, Buffer<unsigned int>::Ptr _indexBuffer, const Material& _material);
-    Scene() = default;
-    ~Scene() = default;
-public:
-    inline Buffer<float>::Ptr getVertexBuffer() { return vertexBuffer; }
-    inline Buffer<unsigned int>::Ptr getIndexBuffer() { return indexBuffer; }
+    
+};
 
-    inline Material getMaterial() { return material; }
-
-    inline std::vector<Scene>& getChildren() { return children; }
+class SceneGraph {
+    SHARED_PTR(Scene)
+private:
+    std::vector<Scene> scenes;
+    std::vector<SceneGraph> children;
 };
 
 }

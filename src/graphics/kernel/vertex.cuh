@@ -11,6 +11,13 @@
 namespace gph
 {
 
+/**
+ * @brief the CUDA kernel that performs the corresponding linear transformations for each 
+ * vertex of the VertexBuffer.
+ * 
+ * @param params KernelVertexParams struct.
+ * @return void 
+ */
 __global__ void kernel_vertex(KernelVertexParams params) {
 
     int idx = blockIdx.x * blockDim.x + threadIdx.x;

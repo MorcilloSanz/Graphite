@@ -52,7 +52,7 @@ int main() {
     int skyWidth, skyHeight, skyChannels;
 
     stbi_set_flip_vertically_on_load(1);
-    unsigned char* skyData = stbi_load("C:/Users/amorc/Desktop/sky.png", &skyWidth, &skyHeight, &skyChannels, STBI_rgb_alpha);
+    unsigned char* skyData = stbi_load("C:/Users/amorc/Documents/Dev/3D/360images/sky.png", &skyWidth, &skyHeight, &skyChannels, STBI_rgb_alpha);
 
     Texture::Ptr sky = Texture::New(skyData, skyWidth, skyHeight);
     renderer.setSky(sky);

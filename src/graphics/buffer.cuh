@@ -1,9 +1,6 @@
 #pragma once
 
 #include <iostream>
-#include <vector>
-#include <map>
-#include <memory>
 #include <cstdint>
 
 #include <cuda_runtime.h>
