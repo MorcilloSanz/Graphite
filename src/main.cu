@@ -1,10 +1,10 @@
 #include <iostream>
 #include <cstdint>
 
-#define STB_IMAGE_IMPLEMENTATION
+//#define STB_IMAGE_IMPLEMENTATION
 #include <vendor/stb_image.h>
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
+//#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <vendor/stb_image_write.h>
 
 #include "graphics/buffer.cuh"
@@ -14,6 +14,7 @@
 #include "math/transform.cuh"
 
 #include "scene/scene.cuh"
+#include "scene/model.cuh"
 
 using namespace gph;
 
@@ -30,7 +31,7 @@ int main() {
     
     Renderer renderer(width, height);
 
-    // Vertex Buffer: x y z r g b nx ny nz uvx uvy batch
+    // Vertex Buffer: x y z r g b nx ny nz uvx uvy materialIndex
     float vertices[] = {
         -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f, -1.0f,  0.0f, 0.0f,  0,
          0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f, -1.0f,  1.0f, 0.0f,  0,
@@ -60,6 +61,9 @@ int main() {
     renderer.setSky(sky);
 
     stbi_image_free(skyData);
+
+    // Model
+    Model::Ptr model = Model::fromFile("c:/Users/amorc/Documents/Dev/3D/models/glTF-Sample-Models/2.0/Lantern/glTF/Lantern.gltf");
 
     // Scene
     std::vector<Material> materials;

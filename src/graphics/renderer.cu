@@ -116,14 +116,6 @@ void Renderer::fragmentShader(Scene::Ptr scene) {
             index ++;
         }
 
-        for(int batch = 0; batch < params.materialsCount; batch ++) {
-            std::cout << "batch " << batch << " albedo " << kernelMaterials[batch].albedo.hasTexture << std::endl;
-            std::cout << "batch " << batch << " metallicRoughness " << kernelMaterials[batch].metallicRoughness.hasTexture << std::endl;
-            std::cout << "batch " << batch << " normal " << kernelMaterials[batch].normal.hasTexture << std::endl;
-            std::cout << "batch " << batch << " ambientOcclusion " << kernelMaterials[batch].ambientOcclusion.hasTexture << std::endl;
-            std::cout << "batch " << batch << " emission " << kernelMaterials[batch].emission.hasTexture << std::endl;
-        }
-
         cudaMemcpy(kernelMaterialsGPU, kernelMaterials, sizeof(KernelMaterial) * params.materialsCount, cudaMemcpyHostToDevice);
         params.materials = kernelMaterialsGPU;
 

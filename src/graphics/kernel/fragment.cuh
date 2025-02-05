@@ -165,7 +165,7 @@ __device__ void program(KernelFragmentParams params, int x, int y) {
     int count = params.indexBuffer.size / sizeof(unsigned int);
     for(int i = 0; i < count; i += 3) {
 
-        unsigned int batch = static_cast<unsigned int>(getAttribute(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, ATTRIBUTE_BATCH));
+        unsigned int materialIndex = static_cast<unsigned int>(getAttribute(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, ATTRIBUTE_MATERIAL_INDEX));
 
         vec3<float> X = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, ATTRIBUTE_X); // v1x v2x v3x
         vec3<float> Y = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, ATTRIBUTE_Y); // v1y v2y v3y
@@ -191,11 +191,11 @@ __device__ void program(KernelFragmentParams params, int x, int y) {
 
             if(params.materialsCount > 0) {
 
-                vec3<float> albedo = tex(params.materials[batch].albedo.texture, uvs.u, uvs.v);
-                vec3<float> metallicRoughness = tex(params.materials[batch].metallicRoughness.texture, uvs.u, uvs.v);
-                vec3<float> normal = tex(params.materials[batch].normal.texture, uvs.u, uvs.v);
-                vec3<float> ambientOcclusion = tex(params.materials[batch].ambientOcclusion.texture, uvs.u, uvs.v);
-                vec3<float> emission = tex(params.materials[batch].emission.texture, uvs.u, uvs.v);
+                vec3<float> albedo = tex(params.materials[materialIndex].albedo.texture, uvs.u, uvs.v);
+                vec3<float> metallicRoughness = tex(params.materials[materialIndex].metallicRoughness.texture, uvs.u, uvs.v);
+                vec3<float> normal = tex(params.materials[materialIndex].normal.texture, uvs.u, uvs.v);
+                vec3<float> ambientOcclusion = tex(params.materials[materialIndex].ambientOcclusion.texture, uvs.u, uvs.v);
+                vec3<float> emission = tex(params.materials[materialIndex].emission.texture, uvs.u, uvs.v);
 
                 c = c * albedo;
             }
