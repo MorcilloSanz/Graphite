@@ -13,6 +13,8 @@
 #include "math/linalg.cuh"
 #include "math/transform.cuh"
 
+#include "scene/scene.cuh"
+
 using namespace gph;
 
 int main() {
@@ -48,6 +50,10 @@ int main() {
     
     Buffer<unsigned int>::Ptr indexBuffer = Buffer<unsigned int>::New(indices, sizeof(indices));
 
+    // Scene
+    std::vector<Material> materials;
+    Scene::Ptr scene = Scene::New(vertexBuffer, indexBuffer, materials);
+
     // Sky
     int skyWidth, skyHeight, skyChannels;
 
@@ -67,7 +73,7 @@ int main() {
     Uniforms uniforms(modelMatrix, viewMatrix);
 
     renderer.setUniforms(uniforms);
-    renderer.draw(vertexBuffer, indexBuffer);
+    renderer.draw(scene);
 
     // CPU image
     uint8_t* bufferCPU = new uint8_t[renderer.getFrameBuffer()->size];

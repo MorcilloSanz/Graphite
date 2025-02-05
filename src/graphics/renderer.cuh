@@ -3,8 +3,10 @@
 #include "math/linalg.cuh"
 #include "graphics/buffer.cuh"
 #include "graphics/texture.cuh"
-
 #include "kernel/kernel.cuh"
+#include "scene/scene.cuh"
+
+#include "material.cuh"
 
 namespace gph
 {
@@ -37,14 +39,14 @@ public:
     Renderer() = default;
     ~Renderer() = default;
 private:
-    KernelVertexParams getKernelVertexParams(Buffer<float>::Ptr vertexBuffer, Buffer<unsigned int>::Ptr indexBuffer);
-    void vertexShader(Buffer<float>::Ptr vertexBuffer, Buffer<unsigned int>::Ptr indexBuffer);
+    KernelVertexParams getKernelVertexParams(Scene::Ptr scene);
+    void vertexShader(Scene::Ptr scene);
 
-    KernelFragmentParams getKernelFragmentParams(Buffer<float>::Ptr vertexBuffer, Buffer<unsigned int>::Ptr indexBuffer);
-    void fragmentShader(Buffer<float>::Ptr vertexBuffer, Buffer<unsigned int>::Ptr indexBuffer);
+    KernelFragmentParams getKernelFragmentParams(Scene::Ptr scene);
+    void fragmentShader(Scene::Ptr scene);
 public:
     void setSky(Texture::Ptr sky);
-    void draw(Buffer<float>::Ptr vertexBuffer, Buffer<unsigned int>::Ptr indexBuffer);
+    void draw(Scene::Ptr scene);
     void clear();
 public:
     inline void setUniforms(const Uniforms<float>& uniforms) { this->uniforms = uniforms; }

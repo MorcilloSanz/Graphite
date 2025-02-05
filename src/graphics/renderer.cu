@@ -13,9 +13,12 @@ Renderer::Renderer(unsigned int width, unsigned int height)
     : frameBuffer(FrameBuffer::New(width, height)), hasSky(false) {
 }
 
-KernelVertexParams Renderer::getKernelVertexParams(Buffer<float>::Ptr vertexBuffer, Buffer<unsigned int>::Ptr indexBuffer) {
+KernelVertexParams Renderer::getKernelVertexParams(Scene::Ptr scene) {
 
     KernelVertexParams params;
+
+    Buffer<float>::Ptr vertexBuffer = scene->vertexBuffer;
+    Buffer<unsigned int>::Ptr indexBuffer = scene->indexBuffer;
 
     KernelVertexBuffer kernelVertexBuffer(vertexBuffer->buff, vertexBuffer->size);
     params.vertexBuffer = kernelVertexBuffer;
@@ -36,21 +39,24 @@ KernelVertexParams Renderer::getKernelVertexParams(Buffer<float>::Ptr vertexBuff
     return params;
 }
 
-void Renderer::vertexShader(Buffer<float>::Ptr vertexBuffer, Buffer<unsigned int>::Ptr indexBuffer) {
+void Renderer::vertexShader(Scene::Ptr scene) {
 
-    KernelVertexParams params = getKernelVertexParams(vertexBuffer, indexBuffer);
+    KernelVertexParams params = getKernelVertexParams(scene);
 
     int threadsPerBlock = 256;
-    int count = indexBuffer->size / sizeof(unsigned int);
+    int count = scene->indexBuffer->size / sizeof(unsigned int);
     int numBlocks = (count + threadsPerBlock - 1) / threadsPerBlock;
 
     kernel_vertex<<<numBlocks, threadsPerBlock>>>(params);
     cudaDeviceSynchronize();
 }
 
-KernelFragmentParams Renderer::getKernelFragmentParams(Buffer<float>::Ptr vertexBuffer, Buffer<unsigned int>::Ptr indexBuffer) {
+KernelFragmentParams Renderer::getKernelFragmentParams(Scene::Ptr scene) {
 
     KernelFragmentParams params;
+
+    Buffer<float>::Ptr vertexBuffer = scene->vertexBuffer;
+    Buffer<unsigned int>::Ptr indexBuffer = scene->indexBuffer;
 
     KernelFrameBuffer kernelFrameBuffer(frameBuffer->buff, frameBuffer->width, frameBuffer->height);
     params.frameBuffer = kernelFrameBuffer;
@@ -69,9 +75,9 @@ KernelFragmentParams Renderer::getKernelFragmentParams(Buffer<float>::Ptr vertex
     return params;
 }
 
-void Renderer::fragmentShader(Buffer<float>::Ptr vertexBuffer, Buffer<unsigned int>::Ptr indexBuffer) {
+void Renderer::fragmentShader(Scene::Ptr scene) {
 
-    KernelFragmentParams params = getKernelFragmentParams(vertexBuffer, indexBuffer);
+    KernelFragmentParams params = getKernelFragmentParams(scene);
 
     dim3 threadsPerBlock(16, 16);
     dim3 blocksPerGrid((frameBuffer->width + threadsPerBlock.x - 1) / threadsPerBlock.x,
@@ -86,9 +92,9 @@ void Renderer::setSky(Texture::Ptr sky) {
     hasSky = true;
 }
 
-void Renderer::draw(Buffer<float>::Ptr vertexBuffer, Buffer<unsigned int>::Ptr indexBuffer) {
-    vertexShader(vertexBuffer, indexBuffer);
-    fragmentShader(vertexBuffer, indexBuffer);
+void Renderer::draw(Scene::Ptr scene) {
+    vertexShader(scene);
+    fragmentShader(scene);
 }
 
 void Renderer::clear() {
