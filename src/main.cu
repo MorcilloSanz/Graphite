@@ -50,10 +50,6 @@ int main() {
     
     Buffer<unsigned int>::Ptr indexBuffer = Buffer<unsigned int>::New(indices, sizeof(indices));
 
-    // Scene
-    std::vector<Material> materials;
-    Scene::Ptr scene = Scene::New(vertexBuffer, indexBuffer, materials);
-
     // Sky
     int skyWidth, skyHeight, skyChannels;
 
@@ -64,6 +60,15 @@ int main() {
     renderer.setSky(sky);
 
     stbi_image_free(skyData);
+
+    // Scene
+    std::vector<Material> materials;
+
+    Material material;
+    material.albedo = sky;
+    materials.push_back(material);
+
+    Scene::Ptr scene = Scene::New(vertexBuffer, indexBuffer, materials);
 
     // Draw call
     renderer.clear();

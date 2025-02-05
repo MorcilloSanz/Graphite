@@ -165,6 +165,8 @@ __device__ void program(KernelFragmentParams params, int x, int y) {
     int count = params.indexBuffer.size / sizeof(unsigned int);
     for(int i = 0; i < count; i += 3) {
 
+        unsigned int batch = static_cast<unsigned int>(getAttribute(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, ATTRIBUTE_BATCH));
+
         vec3<float> X = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, ATTRIBUTE_X); // v1x v2x v3x
         vec3<float> Y = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, ATTRIBUTE_Y); // v1y v2y v3y
         vec3<float> Z = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, ATTRIBUTE_Z); // v1z v2z v3z
@@ -186,6 +188,17 @@ __device__ void program(KernelFragmentParams params, int x, int y) {
             vec3<float> c = getBarycentricColor(params, i, barycentricCoords);
             vec3<float> n = getBarycentricNormal(params, i, barycentricCoords); // Not used for the moment
             vec2<float> uvs = getBarycentricUVs(params, i, barycentricCoords);
+
+            if(params.materialsCount > 0) {
+
+                vec3<float> albedo = tex(params.materials[batch].albedo.texture, uvs.u, uvs.v);
+                vec3<float> metallicRoughness = tex(params.materials[batch].metallicRoughness.texture, uvs.u, uvs.v);
+                vec3<float> normal = tex(params.materials[batch].normal.texture, uvs.u, uvs.v);
+                vec3<float> ambientOcclusion = tex(params.materials[batch].ambientOcclusion.texture, uvs.u, uvs.v);
+                vec3<float> emission = tex(params.materials[batch].emission.texture, uvs.u, uvs.v);
+
+                c = c * albedo;
+            }
 
             vec3<float> lightDirection = vec3<float>(-0.5f, 1.0f, -1.f).normalize();
             float intensity = max(0.f, lightDirection.dot(hitInfo.normal * -1));

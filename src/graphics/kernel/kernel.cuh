@@ -64,9 +64,9 @@ struct KernelTexture {
 
 struct KernelMaterial {
     KernelTexture albedo;
-    KernelTexture roughness;
-    KernelTexture metallic;
+    KernelTexture metallicRoughness;
     KernelTexture normal;
+    KernelTexture ambientOcclusion;
     KernelTexture emission;
 };
 

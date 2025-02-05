@@ -41,8 +41,10 @@ KernelVertexParams Renderer::getKernelVertexParams(Scene::Ptr scene) {
 
 void Renderer::vertexShader(Scene::Ptr scene) {
 
+    // Params
     KernelVertexParams params = getKernelVertexParams(scene);
 
+    // Kernel
     int threadsPerBlock = 256;
     int count = scene->indexBuffer->size / sizeof(unsigned int);
     int numBlocks = (count + threadsPerBlock - 1) / threadsPerBlock;
@@ -70,21 +72,74 @@ KernelFragmentParams Renderer::getKernelFragmentParams(Scene::Ptr scene) {
     KernelTexture kernelSky(sky->getTextureObject(), hasSky);
     params.sky = kernelSky;
 
-    params.materialsCount = 0;
-
     return params;
 }
 
 void Renderer::fragmentShader(Scene::Ptr scene) {
 
+    // Params
     KernelFragmentParams params = getKernelFragmentParams(scene);
 
+    // Materials
+    KernelMaterial* kernelMaterialsGPU;
+    params.materialsCount = scene->materials.size();
+
+    if(params.materialsCount > 0) {
+
+        KernelMaterial* kernelMaterials = new KernelMaterial[params.materialsCount];
+        cudaMalloc((void**)&kernelMaterialsGPU, sizeof(KernelMaterial) * params.materialsCount);
+
+        unsigned int index = 0;
+        for(auto& material : scene->materials) {
+
+            KernelMaterial kernelMaterial;
+
+            KernelTexture albedo(0, false);
+            KernelTexture metallicRoughness(0, false);
+            KernelTexture normal(0, false);
+            KernelTexture ambientOcclusion(0, false);
+            KernelTexture emission(0, false);
+            
+            if(material.albedo) albedo = KernelTexture(material.albedo->getTextureObject());
+            if(material.metallicRoughness) metallicRoughness = KernelTexture(material.metallicRoughness->getTextureObject());
+            if(material.normal) normal = KernelTexture(material.normal->getTextureObject());
+            if(material.ambientOcclusion) ambientOcclusion = KernelTexture(material.ambientOcclusion->getTextureObject());
+            if(material.emission) emission = KernelTexture(material.emission->getTextureObject());
+
+            kernelMaterial.albedo = albedo;
+            kernelMaterial.metallicRoughness = metallicRoughness;
+            kernelMaterial.normal = normal;
+            kernelMaterial.ambientOcclusion = ambientOcclusion;
+            kernelMaterial.emission = emission;
+
+            kernelMaterials[index] = kernelMaterial;
+            index ++;
+        }
+
+        for(int batch = 0; batch < params.materialsCount; batch ++) {
+            std::cout << "batch " << batch << " albedo " << kernelMaterials[batch].albedo.hasTexture << std::endl;
+            std::cout << "batch " << batch << " metallicRoughness " << kernelMaterials[batch].metallicRoughness.hasTexture << std::endl;
+            std::cout << "batch " << batch << " normal " << kernelMaterials[batch].normal.hasTexture << std::endl;
+            std::cout << "batch " << batch << " ambientOcclusion " << kernelMaterials[batch].ambientOcclusion.hasTexture << std::endl;
+            std::cout << "batch " << batch << " emission " << kernelMaterials[batch].emission.hasTexture << std::endl;
+        }
+
+        cudaMemcpy(kernelMaterialsGPU, kernelMaterials, sizeof(KernelMaterial) * params.materialsCount, cudaMemcpyHostToDevice);
+        params.materials = kernelMaterialsGPU;
+
+        delete[] kernelMaterials;
+    }
+
+    // Kernel
     dim3 threadsPerBlock(16, 16);
     dim3 blocksPerGrid((frameBuffer->width + threadsPerBlock.x - 1) / threadsPerBlock.x,
                     (frameBuffer->height + threadsPerBlock.y - 1) / threadsPerBlock.y);
 
     kernel_fragment<<<blocksPerGrid, threadsPerBlock>>>(params);
     cudaDeviceSynchronize();
+
+    if(params.materialsCount > 0) 
+        cudaFree(kernelMaterialsGPU);
 }
 
 void Renderer::setSky(Texture::Ptr sky) {

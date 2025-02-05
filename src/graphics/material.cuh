@@ -8,8 +8,9 @@ namespace gph
 
 struct Material {
     Texture::Ptr albedo;
-    Texture::Ptr roughness;
-    Texture::Ptr metallic;
+    Texture::Ptr metallicRoughness;
+    Texture::Ptr normal;
+    Texture::Ptr ambientOcclusion;
     Texture::Ptr emission;
 };
 
