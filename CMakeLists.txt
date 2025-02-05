@@ -38,15 +38,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
-# ASSIMP
-find_package(assimp REQUIRED)
-
-if(NOT assimp_FOUND)
-    message(FATAL_ERROR "Assimp library not found!")
-else()
-    message(STATUS "Assimp found: ${assimp_DIR}")
-endif()
-
 # Include src
 include_directories(src)
 
@@ -54,6 +45,8 @@ include_directories(src)
 set(CXX_HEADERS 
     src/vendor/stb_image.h
     src/vendor/stb_image_write.h
+    src/vendor/json.hpp
+    src/vendor/tiny_gltf.h
 )
 
 set(CUDA_HEADERS
@@ -71,6 +64,7 @@ set(CUDA_HEADERS
     src/math/geometry.cuh
     src/scene/scene.cuh
     src/scene/bvh.cuh
+    src/scene/model.cuh
 )
 
 # Source Files
@@ -83,8 +77,8 @@ set(CUDA_SOURCES
     src/graphics/buffer.cu
     src/graphics/texture.cu
     src/graphics/renderer.cu
-    src/scene/scene.cu
-    src/scene/bvh.cuh
+    src/scene/bvh.cu
+    src/scene/model.cu
 )
 
 # Add CUDA executable
@@ -94,4 +88,4 @@ add_executable(${PROJECT_NAME} ${CXX_SOURCES} ${CXX_HEADERS} ${CUDA_SOURCES} ${C
 set_target_properties(${PROJECT_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 # Link CUDA executable with CUDA libraries
-target_link_libraries(${PROJECT_NAME} ${CUDA_LIBRARIES} assimp::assimp )
+target_link_libraries(${PROJECT_NAME} ${CUDA_LIBRARIES} )
