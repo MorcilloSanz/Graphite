@@ -4,6 +4,8 @@
 #include "graphics/buffer.cuh"
 #include "graphics/texture.cuh"
 
+#include "kernel/kernel.cuh"
+
 namespace gph
 {
 
@@ -35,7 +37,10 @@ public:
     Renderer() = default;
     ~Renderer() = default;
 private:
+    KernelVertexParams getKernelVertexParams(Buffer<float>::Ptr vertexBuffer, Buffer<unsigned int>::Ptr indexBuffer);
     void vertexShader(Buffer<float>::Ptr vertexBuffer, Buffer<unsigned int>::Ptr indexBuffer);
+
+    KernelFragmentParams getKernelFragmentParams(Buffer<float>::Ptr vertexBuffer, Buffer<unsigned int>::Ptr indexBuffer);
     void fragmentShader(Buffer<float>::Ptr vertexBuffer, Buffer<unsigned int>::Ptr indexBuffer);
 public:
     void setSky(Texture::Ptr sky);

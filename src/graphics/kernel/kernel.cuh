@@ -77,7 +77,8 @@ struct KernelFragmentParams {
     KernelIndexBuffer indexBuffer;
 
     KernelTexture sky;
-    KernelMaterial material;
+    KernelMaterial* materials;
+    size_t materialsCount;
 };
 
 struct KernelVertexParams {

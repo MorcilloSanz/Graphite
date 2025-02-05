@@ -28,13 +28,13 @@ int main() {
     
     Renderer renderer(width, height);
 
-    // Vertex Buffer: x y z r g b nx ny nz uvx uvy
+    // Vertex Buffer: x y z r g b nx ny nz uvx uvy batch
     float vertices[] = {
-        -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f, -1.0f,  0.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f, -1.0f,  1.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f, -1.0f,  1.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 1.0f,  0.0f, 0.0f, -1.0f,  0.0f, 1.0f,
-         0.0f,  0.5f,  0.0f,  1.0f, 0.5f, 0.5f,  0.0f, 1.0f,  0.0f,  0.5f, 0.5f
+        -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f, -1.0f,  0.0f, 0.0f,  0,
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f, -1.0f,  1.0f, 0.0f,  0,
+         0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f, -1.0f,  1.0f, 1.0f,  0,
+        -0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 1.0f,  0.0f, 0.0f, -1.0f,  0.0f, 1.0f,  0,
+         0.0f,  0.5f,  0.0f,  1.0f, 0.5f, 0.5f,  0.0f, 1.0f,  0.0f,  0.5f, 0.5f,  0
     };
 
     Buffer<float>::Ptr vertexBuffer = Buffer<float>::New(vertices, sizeof(vertices));

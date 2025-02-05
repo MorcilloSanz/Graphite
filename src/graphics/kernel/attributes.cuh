@@ -15,7 +15,10 @@
 #define ATTRIBUTE_UVX 9
 #define ATTRIBUTE_UVY 10
 
-#define ATTRIBUTE_STRIDE 11
+#define ATTRIBUTE_BATCH 11
+
+#define ATTRIBUTE_STRIDE 12
+
 
 namespace gph 
 {
