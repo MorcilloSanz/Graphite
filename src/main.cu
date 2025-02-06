@@ -79,10 +79,12 @@ int main() {
 
     mat4<float> modelMatrix = rotationX<float>(M_PI / 5) * rotationY<float>(M_PI / 5);
     mat4<float> viewMatrix = scale<float>(vec3<float>(0.9f));
+
+    modelMatrix = translation<float>(vec3<float>(0.f, 0.f, -24.f));
     Uniforms uniforms(modelMatrix, viewMatrix);
 
     renderer.setUniforms(uniforms);
-    renderer.draw(scene);
+    renderer.draw(model);
 
     // CPU image
     uint8_t* bufferCPU = new uint8_t[renderer.getFrameBuffer()->size];
