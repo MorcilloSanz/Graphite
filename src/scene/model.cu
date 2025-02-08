@@ -36,6 +36,19 @@ bool loadGLTFModel(const std::string& filename, tinygltf::Model& model) {
     return ret;
 }
 
+size_t getNumComponents(int type) {
+    switch (type) {
+        case TINYGLTF_TYPE_SCALAR: return 1;
+        case TINYGLTF_TYPE_VEC2: return 2;
+        case TINYGLTF_TYPE_VEC3: return 3;
+        case TINYGLTF_TYPE_VEC4: return 4;
+        case TINYGLTF_TYPE_MAT2: return 4;
+        case TINYGLTF_TYPE_MAT3: return 9;
+        case TINYGLTF_TYPE_MAT4: return 16;
+        default: return 1; // Fallback en caso de error
+    }
+}
+
 void extractMeshData(const tinygltf::Model& gltfModel, Model::Ptr model) {
 
     std::vector<float> batchVertices;
@@ -49,14 +62,14 @@ void extractMeshData(const tinygltf::Model& gltfModel, Model::Ptr model) {
 
             int materialIndex = 0;
 
-            // Get material index
+            // Obtener el índice del material
             int matIndex = primitive.material;
             if (matIndex >= 0 && matIndex < gltfModel.materials.size()) {
                 const tinygltf::Material& material = gltfModel.materials[matIndex];
                 materialIndex = material.pbrMetallicRoughness.baseColorTexture.index;
             }
 
-            // Get pos, normals and uvs
+            // Función para extraer atributos correctamente respetando el byteStride
             auto extractAttribute = [&](const std::string& name, std::vector<float>& buffer) {
 
                 auto it = primitive.attributes.find(name);
@@ -67,8 +80,29 @@ void extractMeshData(const tinygltf::Model& gltfModel, Model::Ptr model) {
                 const tinygltf::BufferView& bufferView = gltfModel.bufferViews[accessor.bufferView];
                 const tinygltf::Buffer& bufferData = gltfModel.buffers[bufferView.buffer];
 
-                const float* data = reinterpret_cast<const float*>(&bufferData.data[bufferView.byteOffset + accessor.byteOffset]);
-                buffer.assign(data, data + accessor.count * accessor.type);
+                const uint8_t* dataPtr = bufferData.data.data() + bufferView.byteOffset + accessor.byteOffset;
+                size_t componentCount = getNumComponents(accessor.type);
+                size_t elementSize = tinygltf::GetComponentSizeInBytes(accessor.componentType);
+
+                buffer.resize(accessor.count * componentCount);
+
+                for (size_t i = 0; i < accessor.count; ++i) {
+                    const uint8_t* src = dataPtr + i * (bufferView.byteStride > 0 ? bufferView.byteStride : componentCount * elementSize);
+                    float* dst = &buffer[i * componentCount];
+
+                    if (accessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT) {
+                        memcpy(dst, src, componentCount * sizeof(float));
+                    } else if (accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
+                        for (size_t j = 0; j < componentCount; ++j) {
+                            dst[j] = src[j] / 255.0f;  // Normalizar si es UNSIGNED_BYTE
+                        }
+                    } else if (accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
+                        const uint16_t* src16 = reinterpret_cast<const uint16_t*>(src);
+                        for (size_t j = 0; j < componentCount; ++j) {
+                            dst[j] = src16[j] / 65535.0f;  // Normalizar si es UNSIGNED_SHORT
+                        }
+                    }
+                }
 
                 return true;
             };
@@ -79,34 +113,52 @@ void extractMeshData(const tinygltf::Model& gltfModel, Model::Ptr model) {
             extractAttribute("TEXCOORD_0", texcoords);
 
             std::vector<float> vertex;
+            size_t vertexCount = positions.size() / 3;
 
-            unsigned int length = positions.size() / 3;
-            for(int i = 0; i < length; i ++) {
-                vertex.push_back(positions[0 + i * 3]); vertex.push_back(positions[1 + i * 3]); vertex.push_back(positions[2 + i * 3]); // Position
-                vertex.push_back(1.f); vertex.push_back(1.0f); vertex.push_back(1.0f);                                                  // Color
-                vertex.push_back(normals[0 + i * 3]); vertex.push_back(normals[1 + i * 3]); vertex.push_back(normals[2 + i * 3]);       // Normals
-                vertex.push_back(texcoords[0 + i * 2]); vertex.push_back(texcoords[1 + i * 2]);                                         // Uvs
-                vertex.push_back(materialIndex);                                                                                        // Material index
+            for (size_t i = 0; i < vertexCount; i++) {
+                vertex.push_back(positions[i * 3 + 0]); 
+                vertex.push_back(positions[i * 3 + 1]); 
+                vertex.push_back(positions[i * 3 + 2]); // Posición
+
+                vertex.push_back(1.f); vertex.push_back(1.0f); vertex.push_back(1.0f); // Color (dummy)
+
+                if (normals.size() >= (i * 3 + 3)) {
+                    vertex.push_back(normals[i * 3 + 0]); 
+                    vertex.push_back(normals[i * 3 + 1]); 
+                    vertex.push_back(normals[i * 3 + 2]); // Normal
+                } else {
+                    vertex.push_back(0.f); vertex.push_back(0.f); vertex.push_back(0.f); // Normal por defecto
+                }
+
+                if (texcoords.size() >= (i * 2 + 2)) {
+                    vertex.push_back(texcoords[i * 2 + 0]); 
+                    vertex.push_back(1.0f - texcoords[i * 2 + 1]); // Invertir V para OpenGL
+                } else {
+                    vertex.push_back(0.0f); vertex.push_back(0.0f); // UV por defecto
+                }
+
+                vertex.push_back(static_cast<float>(materialIndex)); // Índice de material
             }
 
-            size_t n = batchVertices.size();
+            size_t n = batchVertices.size() / 12; // Cada vértice tiene 12 atributos
+
             batchVertices.insert(batchVertices.end(), vertex.begin(), vertex.end());
 
-            // Get indices
+            // Obtener los índices
             std::vector<uint32_t> indices;
             if (primitive.indices >= 0) {
-
                 const tinygltf::Accessor& accessor = gltfModel.accessors[primitive.indices];
                 const tinygltf::BufferView& bufferView = gltfModel.bufferViews[accessor.bufferView];
                 const tinygltf::Buffer& bufferData = gltfModel.buffers[bufferView.buffer];
 
-                const void* dataPtr = &bufferData.data[bufferView.byteOffset + accessor.byteOffset];
-                for (size_t i = 0; i < accessor.count; i++) {
+                const void* dataPtr = bufferData.data.data() + bufferView.byteOffset + accessor.byteOffset;
 
-                    if (accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT)
+                for (size_t i = 0; i < accessor.count; i++) {
+                    if (accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
                         indices.push_back(static_cast<const uint16_t*>(dataPtr)[i] + n);
-                    else if (accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT)
+                    } else if (accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT) {
                         indices.push_back(static_cast<const uint32_t*>(dataPtr)[i] + n);
+                    }
                 }
             }
 
@@ -114,8 +166,8 @@ void extractMeshData(const tinygltf::Model& gltfModel, Model::Ptr model) {
         }
     }
 
-    Buffer<float>::Ptr vertexBuffer = Buffer<float>::New(&batchVertices[0], sizeof(float) * batchVertices.size());
-    Buffer<unsigned int>::Ptr indexBuffer = Buffer<unsigned int>::New(&batchIndices[0], sizeof(unsigned int) * batchIndices.size());
+    Buffer<float>::Ptr vertexBuffer = Buffer<float>::New(batchVertices.data(), sizeof(float) * batchVertices.size());
+    Buffer<unsigned int>::Ptr indexBuffer = Buffer<unsigned int>::New(batchIndices.data(), sizeof(unsigned int) * batchIndices.size());
 
     model->vertexBuffer = vertexBuffer;
     model->indexBuffer = indexBuffer;

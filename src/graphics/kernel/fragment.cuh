@@ -186,8 +186,10 @@ __device__ void program(KernelFragmentParams params, int x, int y) {
             vec3<float> barycentricCoords = barycentric<float>(hitInfo.intersection, triangle);
 
             vec3<float> c = getBarycentricColor(params, i, barycentricCoords);
-            vec3<float> n = getBarycentricNormal(params, i, barycentricCoords); // Not used for the moment
+            vec3<float> n = getBarycentricNormal(params, i, barycentricCoords);
             vec2<float> uvs = getBarycentricUVs(params, i, barycentricCoords);
+
+            hitInfo.normal = n; // Consider interpolated normal instead of the actual normal of the triangle
 
             if(params.materialsCount > 0) {
 
@@ -197,10 +199,10 @@ __device__ void program(KernelFragmentParams params, int x, int y) {
                 vec3<float> ambientOcclusion = tex(params.materials[materialIndex].ambientOcclusion.texture, uvs.u, uvs.v);
                 vec3<float> emission = tex(params.materials[materialIndex].emission.texture, uvs.u, uvs.v);
 
-                c = c * albedo;
+                c = emission + c * albedo;
             }
 
-            vec3<float> lightDirection = vec3<float>(-0.5f, 1.0f, -1.f).normalize();
+            vec3<float> lightDirection = vec3<float>(0.5f, 0.75f, -1.f).normalize();
             float intensity = max(0.f, lightDirection.dot(hitInfo.normal * -1));
 
             vec3<float> lightColor = vec3<float>(1.0f, 0.9f, 0.9f);

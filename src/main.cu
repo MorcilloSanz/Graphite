@@ -63,7 +63,7 @@ int main() {
     stbi_image_free(skyData);
 
     // Model
-    Model::Ptr model = Model::fromFile("c:/Users/amorc/Documents/Dev/3D/models/glTF-Sample-Models/2.0/Lantern/glTF/Lantern.gltf");
+    Model::Ptr model = Model::fromFile("c:/Users/amorc/Documents/Dev/3D/models/glTF-Sample-Models/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf");
 
     // Scene
     std::vector<Material> materials;
@@ -77,10 +77,9 @@ int main() {
     // Draw call
     renderer.clear();
 
-    mat4<float> modelMatrix = rotationX<float>(M_PI / 5) * rotationY<float>(M_PI / 5);
-    mat4<float> viewMatrix = scale<float>(vec3<float>(0.9f));
+    mat4<float> modelMatrix = rotationX<float>(M_PI / 2.0f) * rotationZ<float>(M_PI / 4.0f);
+    mat4<float> viewMatrix = scale<float>(vec3<float>(0.75f));
 
-    modelMatrix = translation<float>(vec3<float>(0.f, 0.f, -24.f));
     Uniforms uniforms(modelMatrix, viewMatrix);
 
     renderer.setUniforms(uniforms);
