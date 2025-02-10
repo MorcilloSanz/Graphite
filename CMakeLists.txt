@@ -59,6 +59,7 @@ set(CUDA_HEADERS
     src/graphics/kernel/attributes.cuh
     src/graphics/kernel/fragment.cuh
     src/graphics/kernel/vertex.cuh
+    src/graphics/kernel/pbr.cuh
     src/math/linalg.cuh
     src/math/transform.cuh
     src/math/geometry.cuh
@@ -76,6 +77,7 @@ set(CUDA_SOURCES
     src/graphics/buffer.cu
     src/graphics/texture.cu
     src/graphics/renderer.cu
+    src/graphics/kernel/pbr.cu
     src/scene/model.cu
 )
 

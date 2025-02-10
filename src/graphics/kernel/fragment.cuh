@@ -11,9 +11,15 @@
 
 #include "kernel.cuh"
 #include "attributes.cuh"
+#include "pbr.cuh"
 
 namespace gph 
 {
+
+template <typename T>
+__device__ vec3<T> lerp(vec3<T> u, vec3<T> v, T t) {
+    return u + (v - u) * t;
+}
 
 /**
  * @brief Get the barycentric interpolation (vec3) of a point inside a triangle.
@@ -185,29 +191,74 @@ __device__ void program(KernelFragmentParams params, int x, int y) {
 
             vec3<float> barycentricCoords = barycentric<float>(hitInfo.intersection, triangle);
 
-            vec3<float> c = getBarycentricColor(params, i, barycentricCoords);
-            vec3<float> n = getBarycentricNormal(params, i, barycentricCoords);
-            vec2<float> uvs = getBarycentricUVs(params, i, barycentricCoords);
+            vec3<float> c = getBarycentricColor(params, i, barycentricCoords);  // Color interpolation
+            vec3<float> n = getBarycentricNormal(params, i, barycentricCoords); // Normal interpolation
+            vec2<float> uvs = getBarycentricUVs(params, i, barycentricCoords);  // UVs interpolation
 
             hitInfo.normal = n; // Consider interpolated normal instead of the actual normal of the triangle
 
+            vec3<float> albedo, metallicRoughness, normal, ambientOcclusion, emission;
             if(params.materialsCount > 0) {
 
-                vec3<float> albedo = tex(params.materials[materialIndex].albedo.texture, uvs.u, uvs.v);
-                vec3<float> metallicRoughness = tex(params.materials[materialIndex].metallicRoughness.texture, uvs.u, uvs.v);
-                vec3<float> normal = tex(params.materials[materialIndex].normal.texture, uvs.u, uvs.v);
-                vec3<float> ambientOcclusion = tex(params.materials[materialIndex].ambientOcclusion.texture, uvs.u, uvs.v);
-                vec3<float> emission = tex(params.materials[materialIndex].emission.texture, uvs.u, uvs.v);
+                if(params.materials[materialIndex].albedo.hasTexture)
+                    albedo = tex(params.materials[materialIndex].albedo.texture, uvs.u, uvs.v);
+                
+                if(params.materials[materialIndex].metallicRoughness.hasTexture)
+                    metallicRoughness = tex(params.materials[materialIndex].metallicRoughness.texture, uvs.u, uvs.v);
+
+                if(params.materials[materialIndex].normal.hasTexture)
+                    normal = tex(params.materials[materialIndex].normal.texture, uvs.u, uvs.v);
+
+                if(params.materials[materialIndex].ambientOcclusion.hasTexture)
+                    ambientOcclusion = tex(params.materials[materialIndex].ambientOcclusion.texture, uvs.u, uvs.v);
+
+                if(params.materials[materialIndex].emission.hasTexture)
+                    emission = tex(params.materials[materialIndex].emission.texture, uvs.u, uvs.v);
 
                 c = emission + c * albedo;
             }
 
+            vec3<float> lightColor = vec3<float>(1.5f, 1.5f, 1.4f);
             vec3<float> lightDirection = vec3<float>(0.5f, 0.75f, -1.f).normalize();
-            float intensity = max(0.f, lightDirection.dot(hitInfo.normal * -1));
 
-            vec3<float> lightColor = vec3<float>(1.0f, 0.9f, 0.9f);
-            vec3<float> outputColor = c * intensity * lightColor;
+            // Rendering equation
+            vec3<float> Li = lightColor;
+            vec3<float> wi = lightDirection.normalize();
 
+            vec3<float> wo = ray.direction.normalize() * -1;
+            vec3<float> H = (wi + wo).normalize();
+
+            // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
+            // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow) 
+            float metallic = metallicRoughness.b;
+            vec3<float> F0 = vec3<float>(0.04f);
+            F0 = lerp<float>(F0, albedo, metallic);
+            vec3<float> F = fresnelSchlick(max(H.dot(wo), 0.0), F0);
+            
+            // Diffuse
+            vec3<float> fLambert = albedo / M_PI;
+            
+            // Specular
+            float roughness = metallicRoughness.g;
+            vec3<float> specular = specularCookTorrance(H, hitInfo.normal, wo, wi, F, roughness);
+            
+            // Energy ratios
+            vec3<float> kS = F;
+            vec3<float> kD = vec3<float>(1.0f) - kS;
+
+            // BRDF
+            vec3<float> fr = kD * fLambert * ambientOcclusion + specular;
+            vec3<float> Lo = emission + fr * Li * max(0.f, lightDirection.dot(hitInfo.normal * -1));
+            
+            // HDR (Reinhard tone mapping)
+            vec3<float> outputColor = Lo / (vec3<float>(1.0f) + Lo);  // Reinhard Tone Mapping
+
+            // Gamma correction
+            float gamma = 2.2;
+            float power = 1.0 / gamma;
+            outputColor = { pow(outputColor.r, power), pow(outputColor.g, power), pow(outputColor.b, power) };
+
+            // Write pixel into frame buffer
             vec3<unsigned char> pixelColor = {
                 static_cast<unsigned char>(outputColor.x * 255),
                 static_cast<unsigned char>(outputColor.y * 255),

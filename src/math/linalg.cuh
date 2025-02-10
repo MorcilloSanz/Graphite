@@ -25,7 +25,10 @@ struct vec2 {
         : vec2(value, value) {
     }
 
-    __host__ __device__ vec2() = default;
+    __host__ __device__ vec2()
+        : vec2(0) {
+    }
+
     __host__ __device__ ~vec2() = default;
 
     // Operations
@@ -116,7 +119,10 @@ struct vec3 {
         : vec3(value, value, value) {
     }
 
-    __host__ __device__ vec3() = default;
+    __host__ __device__ vec3()
+        : vec3(0) {
+    }
+
     __host__ __device__ ~vec3() = default;
 
     // Operations
@@ -212,7 +218,10 @@ struct vec4 {
         : vec4(value, value, value, value) {
     }
 
-    __host__ __device__ vec4() = default;
+    __host__ __device__ vec4()
+        : vec4(0) {
+    }
+    
     __host__ __device__ ~vec4() = default;
 
     // Operations
