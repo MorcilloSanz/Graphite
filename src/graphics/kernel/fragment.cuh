@@ -204,7 +204,7 @@ __device__ void program(KernelFragmentParams params, int x, int y) {
 
                 if(params.materials[materialIndex].albedo.hasTexture) {
                     albedo = tex(params.materials[materialIndex].albedo.texture, uvs.u, uvs.v);
-                    albedo = { pow(albedo.r, GAMMA), pow(albedo.g, GAMMA), pow(albedo.b, GAMMA) };
+                    albedo = { pow(albedo.r, GAMMA), pow(albedo.g, GAMMA), pow(albedo.b, GAMMA) };  // Convert from sRGB to lineal
                 }
                     
                 if(params.materials[materialIndex].metallicRoughness.hasTexture)
@@ -218,13 +218,13 @@ __device__ void program(KernelFragmentParams params, int x, int y) {
 
                 if(params.materials[materialIndex].emission.hasTexture) {
                     emission = tex(params.materials[materialIndex].emission.texture, uvs.u, uvs.v);
-                    emission = { pow(emission.r, GAMMA), pow(emission.g, GAMMA), pow(emission.b, GAMMA) };
+                    emission = { pow(emission.r, GAMMA), pow(emission.g, GAMMA), pow(emission.b, GAMMA) }; // Convert from sRGB to lineal
                 }
 
                 c = emission + c * albedo;
             }
 
-            vec3<float> lightColor = vec3<float>(2.5f, 2.5f, 2.5f);
+            vec3<float> lightColor = vec3<float>(3.5f, 3.5f, 3.4f);
             vec3<float> lightDirection = vec3<float>(0.5f, 0.75f, -1.f).normalize();
 
             // Rendering equation
@@ -260,8 +260,7 @@ __device__ void program(KernelFragmentParams params, int x, int y) {
             vec3<float> outputColor = Lo / (vec3<float>(1.0f) + Lo);  // Reinhard Tone Mapping
 
             // Gamma correction
-            float gamma = 2.2;
-            float power = 1.0 / gamma;
+            float power = 1.0 / GAMMA;
             outputColor = { pow(outputColor.r, power), pow(outputColor.g, power), pow(outputColor.b, power) };
 
             // Write pixel into frame buffer
