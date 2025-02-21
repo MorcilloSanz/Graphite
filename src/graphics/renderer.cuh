@@ -32,7 +32,7 @@ class Renderer {
 private:
     FrameBuffer::Ptr frameBuffer;
     Uniforms<float> uniforms;
-    Texture::Ptr sky;
+    TextureHDR::Ptr sky;
     bool hasSky;
 public:
     Renderer(unsigned int width, unsigned int height);
@@ -45,7 +45,7 @@ private:
     KernelFragmentParams getKernelFragmentParams(Scene::Ptr scene);
     void fragmentShader(Scene::Ptr scene);
 public:
-    void setSky(Texture::Ptr sky);
+    void setSky(TextureHDR::Ptr sky);
     void draw(Scene::Ptr scene);
     void clear();
 public:

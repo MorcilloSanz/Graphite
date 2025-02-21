@@ -169,6 +169,8 @@ __device__ void program(KernelFragmentParams params, int x, int y) {
     float distance = INFINITY;
     bool missed = true;
 
+    vec3<float> outputColor;
+
     // Ray intersections
     int count = params.indexBuffer.size / sizeof(unsigned int);
     for(int i = 0; i < count; i += 3) {
@@ -254,41 +256,42 @@ __device__ void program(KernelFragmentParams params, int x, int y) {
 
             // BRDF
             vec3<float> fr = kD * fLambert * ambientOcclusion + specular;
+
+            // Rendering equation
             vec3<float> Lo = emission + fr * Li * max(0.f, lightDirection.dot(hitInfo.normal * -1));
-            
-            // HDR (Reinhard tone mapping)
-            vec3<float> outputColor = Lo / (vec3<float>(1.0f) + Lo);  // Reinhard Tone Mapping
 
-            // Gamma correction
-            float power = 1.0 / GAMMA;
-            outputColor = { pow(outputColor.r, power), pow(outputColor.g, power), pow(outputColor.b, power) };
-
-            // Write pixel into frame buffer
-            vec3<unsigned char> pixelColor = {
-                static_cast<unsigned char>(outputColor.x * 255),
-                static_cast<unsigned char>(outputColor.y * 255),
-                static_cast<unsigned char>(outputColor.z * 255),
-            };
-
-            setPixel(params.frameBuffer.buffer, x, y, params.frameBuffer.width, pixelColor);
+            // Update output color
+            outputColor = Lo;
         }
     }
 
     // Miss function
     if(missed) {
 
-        vec3<unsigned char> pixelColor(0, 0, 0);
-
         if(params.sky.hasTexture) {
 
             vec2<float> uvs = getSkyUVs(ray);
             vec3<float> sky = tex(params.sky.texture, uvs.u, uvs.v);
 
-            pixelColor = { static_cast<unsigned char>(sky.r * 255), static_cast<unsigned char>(sky.g * 255), static_cast<unsigned char>(sky.b * 255) };
+            outputColor = sky;
         }
-
-        setPixel(params.frameBuffer.buffer, x, y, params.frameBuffer.width, pixelColor);
     }
+
+    // HDR (Reinhard tone mapping)
+    outputColor = outputColor / (vec3<float>(1.0f) + outputColor);  // Reinhard Tone Mapping
+
+    // Gamma correction
+    float power = 1.0 / GAMMA;
+    outputColor = { pow(outputColor.r, power), pow(outputColor.g, power), pow(outputColor.b, power) };
+
+    // Write pixel into frame buffer
+    vec3<unsigned char> pixelColor = {
+        static_cast<unsigned char>(outputColor.x * 255),
+        static_cast<unsigned char>(outputColor.y * 255),
+        static_cast<unsigned char>(outputColor.z * 255),
+    };
+
+    setPixel(params.frameBuffer.buffer, x, y, params.frameBuffer.width, pixelColor);
 }
 
 /**

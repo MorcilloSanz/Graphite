@@ -26,8 +26,8 @@ int main() {
     std::cout << "Total Memory (GPU): " << totalMem / (1024 * 1024) << " MB" << std::endl;
 
     // Renderer
-    constexpr unsigned int width = 1080;
-    constexpr unsigned int height = 720;
+    constexpr unsigned int width = 1600;
+    constexpr unsigned int height = 900;
     
     Renderer renderer(width, height);
 
@@ -55,9 +55,9 @@ int main() {
     int skyWidth, skyHeight, skyChannels;
 
     stbi_set_flip_vertically_on_load(1);
-    unsigned char* skyData = stbi_load("C:/Users/amorc/Documents/Dev/3D/360images/sky.png", &skyWidth, &skyHeight, &skyChannels, STBI_rgb_alpha);
+    float* skyData = stbi_loadf("C:/Users/amorc/Documents/Dev/3D/360images/aerodynamics_workshop_2k.hdr", &skyWidth, &skyHeight, &skyChannels, STBI_rgb_alpha);
 
-    Texture::Ptr sky = Texture::New(skyData, skyWidth, skyHeight);
+    TextureHDR::Ptr sky = TextureHDR::New(skyData, skyWidth, skyHeight);
     renderer.setSky(sky);
 
     stbi_image_free(skyData);
@@ -67,11 +67,6 @@ int main() {
 
     // Scene
     std::vector<Material> materials;
-
-    Material material;
-    material.albedo = sky;
-    materials.push_back(material);
-
     Scene::Ptr scene = Scene::New(vertexBuffer, indexBuffer, materials);
 
     // Draw call

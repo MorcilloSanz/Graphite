@@ -134,7 +134,7 @@ void Renderer::fragmentShader(Scene::Ptr scene) {
         cudaFree(kernelMaterialsGPU);
 }
 
-void Renderer::setSky(Texture::Ptr sky) {
+void Renderer::setSky(TextureHDR::Ptr sky) {
     this->sky = sky;
     hasSky = true;
 }
