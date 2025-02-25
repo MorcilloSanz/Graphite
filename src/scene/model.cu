@@ -143,32 +143,34 @@ void extractMeshData(const tinygltf::Model& gltfModel, Model::Ptr model) {
                 }
 
                 // Tangents and bitangents
+                vec4<float> tangent(0.0f);
+                float bitangentSign = 0.0f;
+
                 if(tangents.size() >= (i * 4 + 4)) {
                     // Tangents
-                    vec4<float> tangent = { tangents[i * 4 + 0], tangents[i * 4 + 1], tangents[i * 4 + 2], tangents[i * 4 + 3] };
+                    tangent = { tangents[i * 4 + 0], tangents[i * 4 + 1], tangents[i * 4 + 2], tangents[i * 4 + 3] };
+                    bitangentSign = tangent.w;
                     vertex.push_back(tangent.x); vertex.push_back(tangent.y); vertex.push_back(tangent.z);
-                    // Bitangents
-                    float bitangentSign = tangent.w;
-                    vec3<float> bitangent = normal.cross(tangent.xyz()) * bitangentSign;
-                    vertex.push_back(bitangent.x); vertex.push_back(bitangent.y); vertex.push_back(bitangent.z);
                 }else {
-                    // Default tangents
-                    vertex.push_back(0.0f); vertex.push_back(0.0f); vertex.push_back(0.0f);
-                    // Default bitangents
+                    // TODO: compute tangents.
                     vertex.push_back(0.0f); vertex.push_back(0.0f); vertex.push_back(0.0f);
                 }
+
+                // Bitangents
+                vec3<float> bitangent = normal.cross(tangent.xyz()) * bitangentSign;
+                vertex.push_back(bitangent.x); vertex.push_back(bitangent.y); vertex.push_back(bitangent.z);
 
                 // Material index
                 vertex.push_back(static_cast<float>(materialIndex));
             }
 
             size_t n = batchVertices.size() / 18; // Cada vértice tiene 18 atributos
-
             batchVertices.insert(batchVertices.end(), vertex.begin(), vertex.end());
 
             // Obtener los índices
             std::vector<uint32_t> indices;
             if (primitive.indices >= 0) {
+
                 const tinygltf::Accessor& accessor = gltfModel.accessors[primitive.indices];
                 const tinygltf::BufferView& bufferView = gltfModel.bufferViews[accessor.bufferView];
                 const tinygltf::Buffer& bufferData = gltfModel.buffers[bufferView.buffer];

@@ -105,6 +105,30 @@ __device__ vec2<float> getBarycentricUVs(KernelFragmentParams params, int i, vec
 }
 
 /**
+ * @brief Get the corresponding tangent of a point inside a triangle given the barycentric coordinates.
+ * 
+ * @param params KernelFragmentParams struct.
+ * @param i index of the indices of the IndexBuffer.
+ * @param barycentricCoords the barycentric coordinates of the triangle.
+ * @return vec3<float> 
+ */
+__device__ vec3<float> getBarycentricTangent(KernelFragmentParams params, int i, vec3<float> barycentricCoords) {
+    return getBarycentricInterpolation3<float>(params, i, barycentricCoords, ATTRIBUTE_TANX).normalize();
+}
+
+/**
+ * @brief Get the corresponding bitangent of a point inside a triangle given the barycentric coordinates.
+ * 
+ * @param params KernelFragmentParams struct.
+ * @param i index of the indices of the IndexBuffer.
+ * @param barycentricCoords the barycentric coordinates of the triangle.
+ * @return vec3<float> 
+ */
+__device__ vec3<float> getBarycentricBitangent(KernelFragmentParams params, int i, vec3<float> barycentricCoords) {
+    return getBarycentricInterpolation3<float>(params, i, barycentricCoords, ATTRIBUTE_BITANX).normalize();
+}
+
+/**
  * @brief Computes the corresponding UVs of an image mapped to a sphere depending on the ray direction.
  * 
  * @param ray the ray.
@@ -195,9 +219,17 @@ __device__ void program(KernelFragmentParams params, int x, int y) {
 
             vec3<float> barycentricCoords = barycentric<float>(hitInfo.intersection, triangle);
 
-            vec3<float> c = getBarycentricColor(params, i, barycentricCoords);  // Color interpolation
-            vec3<float> n = getBarycentricNormal(params, i, barycentricCoords); // Normal interpolation
-            vec2<float> uvs = getBarycentricUVs(params, i, barycentricCoords);  // UVs interpolation
+            vec3<float> c = getBarycentricColor(params, i, barycentricCoords);          // Color interpolation
+            vec3<float> n = getBarycentricNormal(params, i, barycentricCoords);         // Normal interpolation
+            vec2<float> uvs = getBarycentricUVs(params, i, barycentricCoords);          // UVs interpolation
+            vec3<float> tan = getBarycentricTangent(params, i, barycentricCoords);      // Tangents interpolation
+            vec3<float> bitan = getBarycentricBitangent(params, i, barycentricCoords);  // Bitangents interpolation
+
+            // Compute TBN matrix: transforms from tangent space to world space.
+            mat3<float> TBN;
+            TBN.row1 = { tan.x, bitan.x, n.x };
+            TBN.row2 = { tan.y, bitan.y, n.y };
+            TBN.row1 = { tan.z, bitan.z, n.z };
 
             hitInfo.normal = n; // Consider interpolated normal instead of the actual normal of the triangle
 
@@ -212,8 +244,12 @@ __device__ void program(KernelFragmentParams params, int x, int y) {
                 if(params.materials[materialIndex].metallicRoughness.hasTexture)
                     metallicRoughness = tex(params.materials[materialIndex].metallicRoughness.texture, uvs.u, uvs.v);
 
-                if(params.materials[materialIndex].normal.hasTexture)
+                if(params.materials[materialIndex].normal.hasTexture && tan.x != 0 && tan.y != 0 && tan.z != 0) {
                     normal = tex(params.materials[materialIndex].normal.texture, uvs.u, uvs.v);
+                    normal = normal * 2.0 - 1.0f;
+                    normal = TBN.transform(normal).normalize();
+                    hitInfo.normal = normal; // Consider normal from normal mapping
+                }
 
                 if(params.materials[materialIndex].ambientOcclusion.hasTexture)
                     ambientOcclusion = tex(params.materials[materialIndex].ambientOcclusion.texture, uvs.u, uvs.v);
