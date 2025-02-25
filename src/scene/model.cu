@@ -12,6 +12,7 @@
 #endif
 
 #include "vendor/tiny_gltf.h"
+#include "math/linalg.cuh"
 
 namespace gph
 {
@@ -90,57 +91,78 @@ void extractMeshData(const tinygltf::Model& gltfModel, Model::Ptr model) {
                     const uint8_t* src = dataPtr + i * (bufferView.byteStride > 0 ? bufferView.byteStride : componentCount * elementSize);
                     float* dst = &buffer[i * componentCount];
 
-                    if (accessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT) {
+                    if (accessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT)
                         memcpy(dst, src, componentCount * sizeof(float));
-                    } else if (accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
-                        for (size_t j = 0; j < componentCount; ++j) {
+                    else if (accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
+                        for (size_t j = 0; j < componentCount; ++j)
                             dst[j] = src[j] / 255.0f;  // Normalizar si es UNSIGNED_BYTE
-                        }
                     } else if (accessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
                         const uint16_t* src16 = reinterpret_cast<const uint16_t*>(src);
-                        for (size_t j = 0; j < componentCount; ++j) {
+                        for (size_t j = 0; j < componentCount; ++j)
                             dst[j] = src16[j] / 65535.0f;  // Normalizar si es UNSIGNED_SHORT
-                        }
                     }
                 }
 
                 return true;
             };
 
-            std::vector<float> positions, normals, texcoords;
+            std::vector<float> positions, normals, texcoords, tangents;
             extractAttribute("POSITION", positions);
             extractAttribute("NORMAL", normals);
             extractAttribute("TEXCOORD_0", texcoords);
+            extractAttribute("TANGENT", tangents);
 
             std::vector<float> vertex;
             size_t vertexCount = positions.size() / 3;
 
             for (size_t i = 0; i < vertexCount; i++) {
+
+                // Position
                 vertex.push_back(positions[i * 3 + 0]); 
                 vertex.push_back(positions[i * 3 + 1]); 
-                vertex.push_back(positions[i * 3 + 2]); // Posición
+                vertex.push_back(positions[i * 3 + 2]);                                      
 
-                vertex.push_back(1.f); vertex.push_back(1.0f); vertex.push_back(1.0f); // Color (dummy)
+                // Color (dummy)
+                vertex.push_back(1.f); vertex.push_back(1.0f); vertex.push_back(1.0f);       
 
+                // Normal
+                vec3<float> normal(0.f);
                 if (normals.size() >= (i * 3 + 3)) {
-                    vertex.push_back(normals[i * 3 + 0]); 
-                    vertex.push_back(normals[i * 3 + 1]); 
-                    vertex.push_back(normals[i * 3 + 2]); // Normal
+                    normal = { normals[i * 3 + 0], normals[i * 3 + 1], normals[i * 3 + 2] };
+                    vertex.push_back(normal.x); vertex.push_back(normal.y); vertex.push_back(normal.z);                                    
                 } else {
-                    vertex.push_back(0.f); vertex.push_back(0.f); vertex.push_back(0.f); // Normal por defecto
+                    vertex.push_back(0.f); vertex.push_back(0.f); vertex.push_back(0.f);
                 }
 
+                // UVs
                 if (texcoords.size() >= (i * 2 + 2)) {
                     vertex.push_back(texcoords[i * 2 + 0]); 
                     vertex.push_back(1.0f - texcoords[i * 2 + 1]); // Invertir V para OpenGL
                 } else {
-                    vertex.push_back(0.0f); vertex.push_back(0.0f); // UV por defecto
+                    vertex.push_back(0.0f); vertex.push_back(0.0f);
                 }
 
-                vertex.push_back(static_cast<float>(materialIndex)); // Índice de material
+                // Tangents and bitangents
+                if(tangents.size() >= (i * 4 + 4)) {
+                    // Tangents
+                    vec4<float> tangent = { tangents[i * 4 + 0], tangents[i * 4 + 1], tangents[i * 4 + 2], tangents[i * 4 + 3] };
+                    vertex.push_back(tangent.x); vertex.push_back(tangent.y); vertex.push_back(tangent.z);
+                    // Bitangents
+                    float bitangentSign = tangent.w;
+                    vec3<float> bitangent = normal.cross(tangent.xyz()) * bitangentSign;
+                    vertex.push_back(bitangent.x); vertex.push_back(bitangent.y); vertex.push_back(bitangent.z);
+                }else {
+                    // Default tangents
+                    vertex.push_back(0.0f); vertex.push_back(0.0f); vertex.push_back(0.0f);
+                    // Default bitangents
+                    vertex.push_back(0.0f); vertex.push_back(0.0f); vertex.push_back(0.0f);
+                }
+
+                // Material index
+                vertex.push_back(static_cast<float>(materialIndex));
             }
 
-            size_t n = batchVertices.size() / 12; // Cada vértice tiene 12 atributos
+            size_t n = batchVertices.size() / 18; // Cada vértice tiene 18 atributos
 
             batchVertices.insert(batchVertices.end(), vertex.begin(), vertex.end());
 
