@@ -248,7 +248,7 @@ __device__ void program(KernelFragmentParams params, int x, int y) {
                     normal = tex(params.materials[materialIndex].normal.texture, uvs.u, uvs.v);
                     normal = normal * 2.0 - 1.0f;
                     normal = TBN.transform(normal).normalize();
-                    hitInfo.normal = normal; // Consider normal from normal mapping
+                    hitInfo.normal = normal * -1; // Consider normal from normal mapping
                 }
 
                 if(params.materials[materialIndex].ambientOcclusion.hasTexture)

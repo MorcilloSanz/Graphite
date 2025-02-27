@@ -113,6 +113,7 @@ void extractMeshData(const tinygltf::Model& gltfModel, Model::Ptr model) {
             extractAttribute("TANGENT", tangents);
 
             std::vector<float> vertex;
+            bool hasTangents = true;
             size_t vertexCount = positions.size() / 3;
 
             for (size_t i = 0; i < vertexCount; i++) {
@@ -152,8 +153,8 @@ void extractMeshData(const tinygltf::Model& gltfModel, Model::Ptr model) {
                     bitangentSign = tangent.w;
                     vertex.push_back(tangent.x); vertex.push_back(tangent.y); vertex.push_back(tangent.z);
                 }else {
-                    // TODO: compute tangents.
                     vertex.push_back(0.0f); vertex.push_back(0.0f); vertex.push_back(0.0f);
+                    hasTangents = false;
                 }
 
                 // Bitangents
@@ -187,6 +188,49 @@ void extractMeshData(const tinygltf::Model& gltfModel, Model::Ptr model) {
             }
 
             batchIndices.insert(batchIndices.end(), indices.begin(), indices.end());
+
+            // Compute tangents and bitangents
+            if (!hasTangents) {
+
+                for (size_t i = 0; i < batchIndices.size(); i += 3) {
+
+                    uint32_t i0 = batchIndices[i];
+                    uint32_t i1 = batchIndices[i + 1];
+                    uint32_t i2 = batchIndices[i + 2];
+            
+                    vec3<float> p0(batchVertices[i0 * 18], batchVertices[i0 * 18 + 1], batchVertices[i0 * 18 + 2]);
+                    vec3<float> p1(batchVertices[i1 * 18], batchVertices[i1 * 18 + 1], batchVertices[i1 * 18 + 2]);
+                    vec3<float> p2(batchVertices[i2 * 18], batchVertices[i2 * 18 + 1], batchVertices[i2 * 18 + 2]);
+            
+                    vec2<float> uv0(batchVertices[i0 * 18 + 9], batchVertices[i0 * 18 + 10]);
+                    vec2<float> uv1(batchVertices[i1 * 18 + 9], batchVertices[i1 * 18 + 10]);
+                    vec2<float> uv2(batchVertices[i2 * 18 + 9], batchVertices[i2 * 18 + 10]);
+            
+                    vec3<float> edge1 = p1 - p0;
+                    vec3<float> edge2 = p2 - p0;
+                    vec2<float> deltaUV1 = uv1 - uv0;
+                    vec2<float> deltaUV2 = uv2 - uv0;
+            
+                    float det = (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+                    float f = 1.0f / (det + 1e-6);
+            
+                    vec3<float> tangent = (edge1 * deltaUV2.y - edge2 * deltaUV1.y) * f;
+                    tangent = tangent.normalize();
+            
+                    vec3<float> bitangent = (edge2 * deltaUV1.x - edge1 * deltaUV2.x) * f;
+                    bitangent = bitangent.normalize();
+            
+                    for (uint32_t idx : {i0, i1, i2}) {
+                        batchVertices[idx * 18 + 11] = tangent.x;
+                        batchVertices[idx * 18 + 12] = tangent.y;
+                        batchVertices[idx * 18 + 13] = tangent.z;
+            
+                        batchVertices[idx * 18 + 14] = bitangent.x;
+                        batchVertices[idx * 18 + 15] = bitangent.y;
+                        batchVertices[idx * 18 + 16] = bitangent.z;
+                    }
+                }
+            }
         }
     }
 
