@@ -1,6 +1,9 @@
 #pragma once
 
 #include <cmath>
+#include <cstdlib>
+
+#include <curand_kernel.h>
 
 #include "math/linalg.cuh"
 #include "math/geometry.cuh"
@@ -13,6 +16,7 @@
 #include "attributes.cuh"
 #include "pbr.cuh"
 
+#define SEED 1234
 #define GAMMA 2.2
 
 namespace gph 
@@ -128,6 +132,12 @@ __device__ vec3<float> getBarycentricBitangent(KernelFragmentParams params, int 
     return getBarycentricInterpolation3<float>(params, i, barycentricCoords, ATTRIBUTE_BITANX).normalize();
 }
 
+__device__ vec3<float> reflect(vec3<float> wo, vec3<float> normal) {
+    float dot = normal.dot(wo);
+    vec3<float> wi = wo - normal * 2.f * dot;
+    return wi.normalize();
+}
+
 /**
  * @brief Computes the corresponding UVs of an image mapped to a sphere depending on the ray direction.
  * 
@@ -143,6 +153,66 @@ __device__ vec2<float> getSkyUVs(Ray<float> ray) {
     float v = 1.0f - (theta / M_PI);
 
     return { u, v };
+}
+
+__device__ vec3<float> perpendicular(vec3<float> v) {
+    if (fabs(v.x) > fabs(v.z))
+        return vec3<float>(-v.y, v.x, 0.0f).normalize();
+    else
+        return vec3<float>(0.0f, -v.z, v.y).normalize();
+}
+
+__device__ vec3<float> sampleHemisphereCosine(float u1, float u2, vec3<float> normal) {
+    float r = sqrt(u1);
+    float theta = 2.0f * M_PI * u2;
+
+    float x = r * cos(theta);
+    float y = r * sin(theta);
+    float z = sqrt(max(0.0f, 1.0f - u1));
+
+    vec3<float> tangent = perpendicular(normal).normalize();
+    vec3<float> bitangent = normal.cross(tangent);
+
+    return (tangent * x + bitangent * y + normal * z).normalize();
+}
+
+__device__ vec3<float> toLocalFrame(float x, float y, float z, vec3<float> normal) {
+    // Construcción de un sistema ortonormal (TBN)
+    vec3<float> up = (fabs(normal.z) > 0.999f) ? vec3<float>(1, 0, 0) : vec3<float>(0, 0, 1);
+    vec3<float> tangent = up.cross(normal).normalize();
+    vec3<float> bitangent = normal.cross(tangent).normalize();
+
+    // Transformación del vector (x, y, z) desde el espacio local al global
+    return (tangent * x) + (bitangent * y) + (normal * z);
+}
+
+// Genera una dirección de reflexión especular siguiendo la distribución GGX
+__device__ vec3<float> sampleGGX(float u1, float u2, float alpha, vec3<float> normal, vec3<float> wo) {
+    float phi = 2.0f * M_PI * u1;
+    float cosTheta = sqrtf((1.0f - u2) / (1.0f + (alpha * alpha - 1.0f) * u2));
+    float sinTheta = sqrtf(1.0f - cosTheta * cosTheta);
+
+    vec3<float> H = toLocalFrame(sinTheta * cosf(phi), sinTheta * sinf(phi), cosTheta, normal);
+    vec3<float> wi = reflect(wo * -1, H);
+
+    return (wi.dot(normal) > 0.f) ? wi : wi * -1;
+}
+
+__device__ vec3<float> generateWi(vec3<float> wo, Ray<float>::HitInfo hitInfo, vec3<float> metallicRoughness, curandState& randState) {
+    float u1 = curand_uniform(&randState);
+    float u2 = curand_uniform(&randState);
+
+    vec3<float> diffuseDir = sampleHemisphereCosine(u1, u2, hitInfo.normal);
+    vec3<float> specularDir = sampleGGX(u1, u2, metallicRoughness.g * metallicRoughness.g, hitInfo.normal, wo);
+
+    float metallic = metallicRoughness.b;
+    float roughness = metallicRoughness.g;
+
+    // Mezcla entre los dos métodos según el metalizado
+    float mixFactor = (1.0f - roughness) * metallic;
+    vec3<float> wi = lerp(diffuseDir, specularDir, mixFactor).normalize();
+
+    return (wi.dot(hitInfo.normal) > 0.f) ? wi : wi * -1;
 }
 
 /**
@@ -174,6 +244,14 @@ __device__ void setPixel(uint8_t* frameBuffer, int x, int y, int width, const ve
     frameBuffer[3 * (x + y * width) + 2] = color.b;
 }
 
+__device__ vec3<float> missFunction(KernelFragmentParams params, Ray<float> ray) {
+
+    vec2<float> uvs = getSkyUVs(ray);
+    vec3<float> sky = tex(params.sky.texture, uvs.u, uvs.v);
+
+    return sky;
+}
+
 /**
  * @brief The program which solves the rendering equation computing the output radiance in the eye direction.
  * 
@@ -182,18 +260,11 @@ __device__ void setPixel(uint8_t* frameBuffer, int x, int y, int width, const ve
  * @param y the y coordinate.
  * @return void 
  */
-__device__ void program(KernelFragmentParams params, int x, int y) {
+__device__ vec3<float> castRay(KernelFragmentParams params, Ray<float> ray, int samples, int bounces, curandState randState) {
 
-    if (x >= params.frameBuffer.width || y >= params.frameBuffer.height) {
-        return;
-    }
-
-    // Ray casting
-    Ray<float> ray = Ray<float>::castRayPerspective(x, y, params.frameBuffer.width, params.frameBuffer.height, 60);
+    vec3<float> Lo;
     float distance = INFINITY;
     bool missed = true;
-
-    vec3<float> outputColor;
 
     // Ray intersections
     int count = params.indexBuffer.size / sizeof(unsigned int);
@@ -219,17 +290,17 @@ __device__ void program(KernelFragmentParams params, int x, int y) {
 
             vec3<float> barycentricCoords = barycentric<float>(hitInfo.intersection, triangle);
 
-            vec3<float> c = getBarycentricColor(params, i, barycentricCoords);          // Color interpolation
-            vec3<float> n = getBarycentricNormal(params, i, barycentricCoords);         // Normal interpolation
-            vec2<float> uvs = getBarycentricUVs(params, i, barycentricCoords);          // UVs interpolation
-            vec3<float> tan = getBarycentricTangent(params, i, barycentricCoords);      // Tangents interpolation
-            vec3<float> bitan = getBarycentricBitangent(params, i, barycentricCoords);  // Bitangents interpolation
+            vec3<float> c = getBarycentricColor(params, i, barycentricCoords);
+            vec3<float> n = getBarycentricNormal(params, i, barycentricCoords).normalize();
+            vec2<float> uvs = getBarycentricUVs(params, i, barycentricCoords);
+            vec3<float> tan = getBarycentricTangent(params, i, barycentricCoords).normalize();
+            vec3<float> bitan = getBarycentricBitangent(params, i, barycentricCoords).normalize();
 
             // Compute TBN matrix: transforms from tangent space to world space.
             mat3<float> TBN;
             TBN.row1 = { tan.x, bitan.x, n.x };
             TBN.row2 = { tan.y, bitan.y, n.y };
-            TBN.row1 = { tan.z, bitan.z, n.z };
+            TBN.row3 = { tan.z, bitan.z, n.z };
 
             hitInfo.normal = n; // Consider interpolated normal instead of the actual normal of the triangle
 
@@ -248,7 +319,7 @@ __device__ void program(KernelFragmentParams params, int x, int y) {
                     normal = tex(params.materials[materialIndex].normal.texture, uvs.u, uvs.v);
                     normal = normal * 2.0 - 1.0f;
                     normal = TBN.transform(normal).normalize();
-                    hitInfo.normal = normal * -1; // Consider normal from normal mapping
+                    hitInfo.normal = normal; // Consider normal from normal mapping
                 }
 
                 if(params.materials[materialIndex].ambientOcclusion.hasTexture)
@@ -262,56 +333,105 @@ __device__ void program(KernelFragmentParams params, int x, int y) {
                 c = emission + c * albedo;
             }
 
-            vec3<float> lightColor = vec3<float>(3.5f, 3.5f, 3.4f);
-            vec3<float> lightDirection = vec3<float>(0.5f, 0.75f, -1.f).normalize();
-
-            // Rendering equation
-            vec3<float> Li = lightColor;
-            vec3<float> wi = lightDirection.normalize();
-
             vec3<float> wo = ray.direction.normalize() * -1;
-            vec3<float> H = (wi + wo).normalize();
 
-            // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
-            // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow) 
-            float metallic = metallicRoughness.b;
-            vec3<float> F0 = vec3<float>(0.04f);
-            F0 = lerp<float>(F0, albedo, metallic);
-            vec3<float> F = fresnelSchlick(max(H.dot(wo), 0.0), F0);
-            
-            // Diffuse
-            vec3<float> fLambert = albedo / M_PI;
-            
-            // Specular
-            float roughness = metallicRoughness.g;
-            vec3<float> specular = specularCookTorrance(H, hitInfo.normal, wo, wi, F, roughness);
-            
-            // Energy ratios
-            vec3<float> kS = F;
-            vec3<float> kD = vec3<float>(1.0f) - kS;
+            vec3<float> integral(0.0f);
+            for(int i = 0; i < samples; i ++) {
 
-            // BRDF
-            vec3<float> fr = kD * fLambert * ambientOcclusion + specular;
+                // Compute new direction
+                float u1 = curand_uniform(&randState);
+                float u2 = curand_uniform(&randState);
+
+                vec3<float> diffuseDir = sampleHemisphereCosine(u1, u2, hitInfo.normal);
+                vec3<float> specularDir = reflect(wo, hitInfo.normal);
+
+                float metallic = metallicRoughness.b;
+                float roughness = metallicRoughness.g;
+
+                vec3<float> wi = lerp(diffuseDir, specularDir, 1.f - roughness).normalize();
+                if(wi.dot(hitInfo.normal) < 0.f) wi = wi * -1;
+
+                wi = generateWi(wo, hitInfo, metallicRoughness, randState);
+                wi = vec3<float>(0.5f, -0.75f, -1.f).normalize() * -1;
+
+                // Rendering equation
+                vec3<float> Li(0.0);
+
+                const float epsilon = 1e-4;
+                Ray<float> newRay(hitInfo.intersection + hitInfo.normal * epsilon, wi); // Desplazar un poco el origen para que no intersecte con si mismo
+
+                if(bounces > 0) {
+                    Li = castRay(params, newRay, samples, bounces - 1, randState);
+                }else {
+                    if(params.sky.hasTexture)
+                        Li = missFunction(params, newRay);
+                }
+
+                //wi = vec3<float>(0.5f, -0.75f, -1.f).normalize() * -1;
+
+                vec3<float> H = (wi + wo).normalize();
+                // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
+                // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow) 
+                vec3<float> F0 = vec3<float>(0.04f);
+                F0 = lerp<float>(F0, albedo, metallic);
+                vec3<float> F = fresnelSchlick(max(H.dot(wo), 0.0), F0);
+                
+                // Diffuse
+                vec3<float> fLambert = albedo / M_PI;
+                
+                // Specular
+                vec3<float> specular = specularCookTorrance(H, hitInfo.normal, wo, wi, F, roughness);
+                
+                // Energy ratios
+                vec3<float> kS = F;
+                vec3<float> kD = vec3<float>(1.0f) - kS;
+
+                // BRDF
+                vec3<float> fr = kD * fLambert * ambientOcclusion + specular;
+
+                // Integral
+                integral = integral + fr * Li * max(0.f, wi.dot(hitInfo.normal));
+            }
 
             // Rendering equation
-            vec3<float> Lo = emission + fr * Li * max(0.f, lightDirection.dot(hitInfo.normal * -1));
-
-            // Update output color
-            outputColor = Lo;
+            Lo = emission + integral * (2.f * M_PI / samples);
         }
     }
 
     // Miss function
     if(missed) {
-
-        if(params.sky.hasTexture) {
-
-            vec2<float> uvs = getSkyUVs(ray);
-            vec3<float> sky = tex(params.sky.texture, uvs.u, uvs.v);
-
-            outputColor = sky;
-        }
+        if(params.sky.hasTexture)
+            Lo = missFunction(params, ray);
     }
+
+    return Lo;
+}
+
+/**
+ * @brief the CUDA kernel that executes the program for each pixel of the FrameBuffer image.
+ * 
+ * @param params KernelFragmentParams struct.
+ * @return void 
+ */
+__global__ void kernel_fragment(KernelFragmentParams params) {
+
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
+
+    if (x >= params.frameBuffer.width || y >= params.frameBuffer.height)
+        return;
+
+    // Inicializar el estado de curand con una semilla única por píxel
+    curandState randState;
+    int pixelIndex = y * params.frameBuffer.width + x;
+    curand_init(SEED, pixelIndex, 0, &randState);
+
+    // Compute outgoing radiance
+    const int samples = 100;
+    const int bounces = 1;
+
+    Ray<float> ray = Ray<float>::castRayPerspective(x, y, params.frameBuffer.width, params.frameBuffer.height, 60);
+    vec3<float> outputColor = castRay(params, ray, samples, bounces, randState);
 
     // HDR (Reinhard tone mapping)
     outputColor = outputColor / (vec3<float>(1.0f) + outputColor);  // Reinhard Tone Mapping
@@ -328,20 +448,6 @@ __device__ void program(KernelFragmentParams params, int x, int y) {
     };
 
     setPixel(params.frameBuffer.buffer, x, y, params.frameBuffer.width, pixelColor);
-}
-
-/**
- * @brief the CUDA kernel that executes the program for each pixel of the FrameBuffer image.
- * 
- * @param params KernelFragmentParams struct.
- * @return void 
- */
-__global__ void kernel_fragment(KernelFragmentParams params) {
-
-    int x = blockIdx.x * blockDim.x + threadIdx.x;
-    int y = blockIdx.y * blockDim.y + threadIdx.y;
-
-    program(params, x, y);
 }
 
 }
