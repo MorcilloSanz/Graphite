@@ -3,11 +3,6 @@
 #include <cmath>
 #include <cstdlib>
 
-#include <curand_kernel.h>
-
-#include "math/linalg.cuh"
-#include "math/geometry.cuh"
-
 #include "graphics/buffer.cuh"
 #include "graphics/texture.cuh"
 #include "graphics/material.cuh"
@@ -155,63 +150,17 @@ __device__ vec2<float> getSkyUVs(Ray<float> ray) {
     return { u, v };
 }
 
-__device__ vec3<float> perpendicular(vec3<float> v) {
-    if (fabs(v.x) > fabs(v.z))
-        return vec3<float>(-v.y, v.x, 0.0f).normalize();
-    else
-        return vec3<float>(0.0f, -v.z, v.y).normalize();
-}
-
-__device__ vec3<float> sampleHemisphereCosine(float u1, float u2, vec3<float> normal) {
-    float r = sqrt(u1);
-    float theta = 2.0f * M_PI * u2;
-
-    float x = r * cos(theta);
-    float y = r * sin(theta);
-    float z = sqrt(max(0.0f, 1.0f - u1));
-
-    vec3<float> tangent = perpendicular(normal).normalize();
-    vec3<float> bitangent = normal.cross(tangent);
-
-    return (tangent * x + bitangent * y + normal * z).normalize();
-}
-
-__device__ vec3<float> toLocalFrame(float x, float y, float z, vec3<float> normal) {
-    // Construcción de un sistema ortonormal (TBN)
-    vec3<float> up = (fabs(normal.z) > 0.999f) ? vec3<float>(1, 0, 0) : vec3<float>(0, 0, 1);
-    vec3<float> tangent = up.cross(normal).normalize();
-    vec3<float> bitangent = normal.cross(tangent).normalize();
-
-    // Transformación del vector (x, y, z) desde el espacio local al global
-    return (tangent * x) + (bitangent * y) + (normal * z);
-}
-
-// Genera una dirección de reflexión especular siguiendo la distribución GGX
-__device__ vec3<float> sampleGGX(float u1, float u2, float alpha, vec3<float> normal, vec3<float> wo) {
-    float phi = 2.0f * M_PI * u1;
-    float cosTheta = sqrtf((1.0f - u2) / (1.0f + (alpha * alpha - 1.0f) * u2));
-    float sinTheta = sqrtf(1.0f - cosTheta * cosTheta);
-
-    vec3<float> H = toLocalFrame(sinTheta * cosf(phi), sinTheta * sinf(phi), cosTheta, normal);
-    vec3<float> wi = reflect(wo * -1, H);
-
-    return (wi.dot(normal) > 0.f) ? wi : wi * -1;
-}
-
-__device__ vec3<float> generateWi(vec3<float> wo, Ray<float>::HitInfo hitInfo, vec3<float> metallicRoughness, curandState& randState) {
-    float u1 = curand_uniform(&randState);
-    float u2 = curand_uniform(&randState);
-
-    vec3<float> diffuseDir = sampleHemisphereCosine(u1, u2, hitInfo.normal);
-    vec3<float> specularDir = sampleGGX(u1, u2, metallicRoughness.g * metallicRoughness.g, hitInfo.normal, wo);
-
-    float metallic = metallicRoughness.b;
-    float roughness = metallicRoughness.g;
-
-    // Mezcla entre los dos métodos según el metalizado
-    float mixFactor = (1.0f - roughness) * metallic;
-    vec3<float> wi = lerp(diffuseDir, specularDir, mixFactor).normalize();
-
+/**
+ * @brief Microfacet-BRDF hemisphere sampling for computing the ingoing radiance direction.
+ * 
+ * @param wo outgoing direction.
+ * @param hitInfo the hit information.
+ * @param roughness the roughness of the material .
+ * @param randState CUDA rand state.
+ * @return vec3<float> 
+ */
+__device__ vec3<float> generateWi(vec3<float> wo, Ray<float>::HitInfo hitInfo, float roughness, curandState& randState) {
+    vec3<float> wi = sampleGGX(hitInfo.normal, wo, roughness, randState);
     return (wi.dot(hitInfo.normal) > 0.f) ? wi : wi * -1;
 }
 
@@ -338,21 +287,12 @@ __device__ vec3<float> castRay(KernelFragmentParams params, Ray<float> ray, int 
             vec3<float> integral(0.0f);
             for(int i = 0; i < samples; i ++) {
 
-                // Compute new direction
-                float u1 = curand_uniform(&randState);
-                float u2 = curand_uniform(&randState);
-
-                vec3<float> diffuseDir = sampleHemisphereCosine(u1, u2, hitInfo.normal);
-                vec3<float> specularDir = reflect(wo, hitInfo.normal);
-
                 float metallic = metallicRoughness.b;
                 float roughness = metallicRoughness.g;
 
-                vec3<float> wi = lerp(diffuseDir, specularDir, 1.f - roughness).normalize();
-                if(wi.dot(hitInfo.normal) < 0.f) wi = wi * -1;
-
-                wi = generateWi(wo, hitInfo, metallicRoughness, randState);
-                wi = vec3<float>(0.5f, -0.75f, -1.f).normalize() * -1;
+                // Compute new direction
+                vec3<float> wi = generateWi(wo, hitInfo, roughness, randState);
+                //wi = vec3<float>(0.5f, -0.75f, -1.f).normalize() * -1;
 
                 // Rendering equation
                 vec3<float> Li(0.0);
@@ -367,7 +307,7 @@ __device__ vec3<float> castRay(KernelFragmentParams params, Ray<float> ray, int 
                         Li = missFunction(params, newRay);
                 }
 
-                //wi = vec3<float>(0.5f, -0.75f, -1.f).normalize() * -1;
+                wi = vec3<float>(0.5f, -0.75f, -1.f).normalize() * -1;
 
                 vec3<float> H = (wi + wo).normalize();
                 // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
@@ -427,7 +367,7 @@ __global__ void kernel_fragment(KernelFragmentParams params) {
     curand_init(SEED, pixelIndex, 0, &randState);
 
     // Compute outgoing radiance
-    const int samples = 100;
+    const int samples = 3;
     const int bounces = 1;
 
     Ray<float> ray = Ray<float>::castRayPerspective(x, y, params.frameBuffer.width, params.frameBuffer.height, 60);

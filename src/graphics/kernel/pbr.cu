@@ -7,6 +7,46 @@ __device__ float clamp(float value, float minVal, float maxVal) {
     return max(minVal, min(value, maxVal));
 }
 
+__device__ void orthonormalBasis(vec3<float> N, vec3<float>& tangent, vec3<float>& bitangent) {
+    if (fabs(N.x) > fabs(N.z))
+        tangent = vec3<float>(-N.y, N.x, 0.0f).normalize();
+    else
+        tangent = vec3<float>(0.0f, -N.z, N.y).normalize();
+
+    bitangent = N.cross(tangent);
+}
+
+__device__ vec3<float> sampleGGX(vec3<float> N, vec3<float> V, float roughness, curandState& state) {
+    float alpha = roughness * roughness;
+
+    // Generamos dos números aleatorios en [0,1]
+    float xi1 = curand_uniform(&state);
+    float xi2 = curand_uniform(&state);
+
+    // Muestreo de GGX para theta_h y phi_h
+    float theta_h = atan(sqrt(alpha * alpha * xi1) / sqrt(1.0 - xi1));
+    float phi_h = 2.0 * M_PI * xi2;
+
+    // Convertir a coordenadas cartesianas
+    float sinTheta = sin(theta_h);
+    float cosTheta = cos(theta_h);
+    float sinPhi = sin(phi_h);
+    float cosPhi = cos(phi_h);
+
+    // Vector mitad H en espacio local
+    vec3<float> H = vec3<float>(sinTheta * cosPhi, sinTheta * sinPhi, cosTheta);
+
+    // Convertir H al sistema de referencia de la normal N
+    vec3<float> tangent, bitangent;
+    orthonormalBasis(N, tangent, bitangent);
+    H = (tangent * H.x + bitangent * H.y + N * H.z).normalize();
+
+    // Reflexión especular para obtener L
+    vec3<float> L = (H * V.dot(H) * 2.0f - V).normalize();
+
+    return L;
+}
+
 __device__ float distributionGGX(vec3<float> N, vec3<float> H, float roughness) {
 
     float a = roughness * roughness;
