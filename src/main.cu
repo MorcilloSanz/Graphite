@@ -31,26 +31,6 @@ int main() {
     
     Renderer renderer(width, height);
 
-    // Vertex Buffer: x y z r g b nx ny nz uvx uvy tanx tany tanz bitanx bitany bitanz materialIndex
-    float vertices[] = {
-        -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f, -1.0f,  0.0f, 0.0f,  0.0f, 0.0f, 0.0f,  0.0f, 0.0f, 0.0f,  0,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f, -1.0f,  1.0f, 0.0f,  0.0f, 0.0f, 0.0f,  0.0f, 0.0f, 0.0f,  0,
-         0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f, -1.0f,  1.0f, 1.0f,  0.0f, 0.0f, 0.0f,  0.0f, 0.0f, 0.0f,  0,
-        -0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 1.0f,  0.0f, 0.0f, -1.0f,  0.0f, 1.0f,  0.0f, 0.0f, 0.0f,  0.0f, 0.0f, 0.0f,  0,
-         0.0f,  0.5f,  0.0f,  1.0f, 0.5f, 0.5f,  0.0f, 1.0f,  0.0f,  0.5f, 0.5f,  0.0f, 0.0f, 0.0f,  0.0f, 0.0f, 0.0f,  0
-    };
-
-    Buffer<float>::Ptr vertexBuffer = Buffer<float>::New(vertices, sizeof(vertices));
-
-    // Index buffer
-    unsigned int indices[] = {
-        0, 1, 4, 1, 2, 4,
-        2, 3, 4, 3, 0, 4,
-        0, 1, 2, 0, 2, 3
-    };
-    
-    Buffer<unsigned int>::Ptr indexBuffer = Buffer<unsigned int>::New(indices, sizeof(indices));
-
     // Sky
     int skyWidth, skyHeight, skyChannels;
 
@@ -64,10 +44,6 @@ int main() {
 
     // Model
     Model::Ptr model = Model::fromFile("c:/Users/amorc/Documents/Dev/3D/models/glTF-Sample-Models/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf");
-
-    // Scene
-    std::vector<Material> materials;
-    Scene::Ptr scene = Scene::New(vertexBuffer, indexBuffer, materials);
 
     // Draw call
     renderer.clear();

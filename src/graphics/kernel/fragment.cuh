@@ -127,12 +127,6 @@ __device__ vec3<float> getBarycentricBitangent(KernelFragmentParams params, int 
     return getBarycentricInterpolation3<float>(params, i, barycentricCoords, ATTRIBUTE_BITANX).normalize();
 }
 
-__device__ vec3<float> reflect(vec3<float> wo, vec3<float> normal) {
-    float dot = normal.dot(wo);
-    vec3<float> wi = wo - normal * 2.f * dot;
-    return wi.normalize();
-}
-
 /**
  * @brief Computes the corresponding UVs of an image mapped to a sphere depending on the ray direction.
  * 
@@ -148,20 +142,6 @@ __device__ vec2<float> getSkyUVs(Ray<float> ray) {
     float v = 1.0f - (theta / M_PI);
 
     return { u, v };
-}
-
-/**
- * @brief Microfacet-BRDF hemisphere sampling for computing the ingoing radiance direction.
- * 
- * @param wo outgoing direction.
- * @param hitInfo the hit information.
- * @param roughness the roughness of the material .
- * @param randState CUDA rand state.
- * @return vec3<float> 
- */
-__device__ vec3<float> generateWi(vec3<float> wo, Ray<float>::HitInfo hitInfo, float roughness, curandState& randState) {
-    vec3<float> wi = sampleGGX(hitInfo.normal, wo, roughness, randState);
-    return (wi.dot(hitInfo.normal) > 0.f) ? wi : wi * -1;
 }
 
 /**
@@ -282,17 +262,17 @@ __device__ vec3<float> castRay(KernelFragmentParams params, Ray<float> ray, int 
                 c = emission + c * albedo;
             }
 
+            vec3<float> Le = emission;
             vec3<float> wo = ray.direction.normalize() * -1;
 
-            vec3<float> integral(0.0f);
+            vec3<float> sum(0.0f);
             for(int i = 0; i < samples; i ++) {
 
                 float metallic = metallicRoughness.b;
                 float roughness = metallicRoughness.g;
 
                 // Compute new direction
-                vec3<float> wi = generateWi(wo, hitInfo, roughness, randState);
-                //wi = vec3<float>(0.5f, -0.75f, -1.f).normalize() * -1;
+                vec3<float> wi = reflect(wo, hitInfo.normal) * -1;
 
                 // Rendering equation
                 vec3<float> Li(0.0);
@@ -307,7 +287,7 @@ __device__ vec3<float> castRay(KernelFragmentParams params, Ray<float> ray, int 
                         Li = missFunction(params, newRay);
                 }
 
-                wi = vec3<float>(0.5f, -0.75f, -1.f).normalize() * -1;
+                //wi = vec3<float>(0.5f, -0.75f, -1.f).normalize() * -1;
 
                 vec3<float> H = (wi + wo).normalize();
                 // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
@@ -320,21 +300,21 @@ __device__ vec3<float> castRay(KernelFragmentParams params, Ray<float> ray, int 
                 vec3<float> fLambert = albedo / M_PI;
                 
                 // Specular
-                vec3<float> specular = specularCookTorrance(H, hitInfo.normal, wo, wi, F, roughness);
+                vec3<float> specular = monteCarloGGX(H, hitInfo.normal, wo, wi, F0, roughness);
                 
                 // Energy ratios
                 vec3<float> kS = F;
                 vec3<float> kD = vec3<float>(1.0f) - kS;
 
                 // BRDF
-                vec3<float> fr = kD * fLambert * ambientOcclusion + specular;
+                vec3<float> fr = kD * fLambert * ambientOcclusion + kS * specular;
 
-                // Integral
-                integral = integral + fr * Li * max(0.f, wi.dot(hitInfo.normal));
+                // Monte Carlo
+                sum = sum + fr * Li;
             }
 
             // Rendering equation
-            Lo = emission + integral * (2.f * M_PI / samples);
+            Lo = Le + sum / samples;
         }
     }
 
@@ -367,7 +347,7 @@ __global__ void kernel_fragment(KernelFragmentParams params) {
     curand_init(SEED, pixelIndex, 0, &randState);
 
     // Compute outgoing radiance
-    const int samples = 3;
+    const int samples = 5;
     const int bounces = 1;
 
     Ray<float> ray = Ray<float>::castRayPerspective(x, y, params.frameBuffer.width, params.frameBuffer.height, 60);

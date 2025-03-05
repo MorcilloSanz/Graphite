@@ -21,25 +21,19 @@ namespace gph
 __device__ float clamp(float value, float minVal, float maxVal);
 
 /**
- * @brief Constructs an orthonormal system from N.
+ * @brief Reflects a vector `wo` across a given normal vector.
  * 
- * @param N the normal vector.
- * @param tangent the tangent vector.
- * @param bitangent the bitangent vector.
- * @return __device__ 
- */
-__device__ void orthonormalBasis(vec3<float> N, vec3<float>& tangent, vec3<float>& bitangent);
-
-/**
- * @brief Microfacet-BRDF hemisphere sampling using GGX distribution function.
+ * This function computes the reflection of an incident vector `wo` relative to a normal vector `normal`.
+ * The formula used is: 
+ *      reflected = wo - 2 * dot(wo, normal) * normal
+ * where `dot(wo, normal)` is the dot product of the incident vector and the normal vector.
+ * This is commonly used in shading and ray tracing to simulate reflection of light on surfaces.
  * 
- * @param N the normal vector.
- * @param V the outoging direction.
- * @param roughness the roughness of the material.
- * @param state CUDA rand state.
- * @return vec3<float> 
+ * @param wo The incident vector (e.g., the outgoing ray direction or the view direction).
+ * @param normal The surface normal vector to reflect the incident vector against.
+ * @return vec3<float>
  */
-__device__ vec3<float> sampleGGX(vec3<float> N, vec3<float> V, float roughness, curandState& state);
+__device__ vec3<float> reflect(vec3<float> wo, vec3<float> normal);
 
 /**
  * @brief Distribution GGX.
@@ -92,5 +86,21 @@ __device__ vec3<float> fresnelSchlick(float cosTheta, vec3<float> F0);
  * @return __device__ 
  */
 __device__ vec3<float> specularCookTorrance(vec3<float> H, vec3<float> normal, vec3<float> wo, vec3<float> wi, vec3<float> F, float roughness);
+
+/**
+ * @brief Monte Carlo GGX BRDF estimator. IMPORTANT: monteCarloGGX = (BRDF * wi.dot(normal)) / PDF
+ * 
+ * Take a look at:
+ * https://jcgt.org/published/0007/04/01/paper.pdf
+ * 
+ * @param H 
+ * @param normal 
+ * @param wo 
+ * @param wi 
+ * @param F 
+ * @param roughness 
+ * @return __device__ 
+ */
+__device__ vec3<float> monteCarloGGX(vec3<float> H, vec3<float> normal, vec3<float> wo, vec3<float> wi, vec3<float> F0, float roughness);
 
 }

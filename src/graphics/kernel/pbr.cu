@@ -7,44 +7,12 @@ __device__ float clamp(float value, float minVal, float maxVal) {
     return max(minVal, min(value, maxVal));
 }
 
-__device__ void orthonormalBasis(vec3<float> N, vec3<float>& tangent, vec3<float>& bitangent) {
-    if (fabs(N.x) > fabs(N.z))
-        tangent = vec3<float>(-N.y, N.x, 0.0f).normalize();
-    else
-        tangent = vec3<float>(0.0f, -N.z, N.y).normalize();
+__device__ vec3<float> reflect(vec3<float> wo, vec3<float> normal) {
 
-    bitangent = N.cross(tangent);
-}
-
-__device__ vec3<float> sampleGGX(vec3<float> N, vec3<float> V, float roughness, curandState& state) {
-    float alpha = roughness * roughness;
-
-    // Generamos dos números aleatorios en [0,1]
-    float xi1 = curand_uniform(&state);
-    float xi2 = curand_uniform(&state);
-
-    // Muestreo de GGX para theta_h y phi_h
-    float theta_h = atan(sqrt(alpha * alpha * xi1) / sqrt(1.0 - xi1));
-    float phi_h = 2.0 * M_PI * xi2;
-
-    // Convertir a coordenadas cartesianas
-    float sinTheta = sin(theta_h);
-    float cosTheta = cos(theta_h);
-    float sinPhi = sin(phi_h);
-    float cosPhi = cos(phi_h);
-
-    // Vector mitad H en espacio local
-    vec3<float> H = vec3<float>(sinTheta * cosPhi, sinTheta * sinPhi, cosTheta);
-
-    // Convertir H al sistema de referencia de la normal N
-    vec3<float> tangent, bitangent;
-    orthonormalBasis(N, tangent, bitangent);
-    H = (tangent * H.x + bitangent * H.y + N * H.z).normalize();
-
-    // Reflexión especular para obtener L
-    vec3<float> L = (H * V.dot(H) * 2.0f - V).normalize();
-
-    return L;
+    float dot = normal.dot(wo);
+    vec3<float> wi = wo - normal * 2.f * dot;
+    
+    return wi.normalize();
 }
 
 __device__ float distributionGGX(vec3<float> N, vec3<float> H, float roughness) {
@@ -96,6 +64,23 @@ __device__ vec3<float> specularCookTorrance(vec3<float> H, vec3<float> normal, v
     vec3<float> specular = numerator / denominator;
     
     return specular;
+}
+
+__device__ float G1(vec3<float> V, float roughness) {
+
+    float alpha2 = roughness * roughness;
+    float lenqs = V.x * V.x + V.y * V.y;
+    float lambda = 0.5 * (-1 + sqrt(1 + (alpha2 * lenqs) / (V.z * V.z)));
+
+    return 1 / (1 + lambda);
+}
+
+__device__ vec3<float> monteCarloGGX(vec3<float> H, vec3<float> normal, vec3<float> wo, vec3<float> wi, vec3<float> F0, float roughness) {
+
+    float G2 = geometrySmith(normal, wo, wi, roughness);
+    vec3<float> F = fresnelSchlick(max(wi.dot(wo), 0.0), F0);
+
+    return F * G2 / G1(wo, roughness);
 }
     
 }
