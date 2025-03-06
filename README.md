@@ -21,4 +21,7 @@ $$\int_{\Omega} f_{r}\left (  p, w_{i}, w_{o} \right ) L_{i} \left (  p, w_{i} \
 * **CUDA Toolkit:** nvcc for compiling CUDA code.
 
 # Output
+
 ![](img/output.png)
+
+![](img/output2.png)
