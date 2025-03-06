@@ -307,7 +307,7 @@ __device__ vec3<float> castRay(KernelFragmentParams params, Ray<float> ray, int 
                 vec3<float> kD = vec3<float>(1.0f) - kS;
 
                 // BRDF
-                vec3<float> fr = kD * fLambert * ambientOcclusion + kS * specular;
+                vec3<float> fr = (kD * fLambert + kS * specular) * ambientOcclusion;
 
                 // Monte Carlo
                 sum = sum + fr * Li;
