@@ -272,7 +272,12 @@ __device__ vec3<float> castRay(KernelFragmentParams params, Ray<float> ray, int 
                 float roughness = metallicRoughness.g;
 
                 // Compute new direction
-                vec3<float> wi = reflect(wo, hitInfo.normal) * -1;
+                float U1 = curand_uniform(&randState);
+                float U2 = curand_uniform(&randState);
+
+                vec3<float> ne = sampleGGXVNDF(wo, roughness, U1, U2);
+                ne = lerp<float>(hitInfo.normal, ne, roughness);
+                vec3<float> wi = reflect(wo, ne) * -1;
 
                 // Rendering equation
                 vec3<float> Li(0.0);
@@ -287,27 +292,25 @@ __device__ vec3<float> castRay(KernelFragmentParams params, Ray<float> ray, int 
                         Li = missFunction(params, newRay);
                 }
 
-                //wi = vec3<float>(0.5f, -0.75f, -1.f).normalize() * -1;
-
+                // Fresnel
                 vec3<float> H = (wi + wo).normalize();
-                // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
-                // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow) 
-                vec3<float> F0 = vec3<float>(0.04f);
+                vec3<float> F0 = vec3<float>(0.04f); // dia-electric (like plastic) use F0 = 0.04
+
                 F0 = lerp<float>(F0, albedo, metallic);
                 vec3<float> F = fresnelSchlick(max(H.dot(wo), 0.0), F0);
                 
                 // Diffuse
-                vec3<float> fLambert = albedo / M_PI;
+                vec3<float> diffuse = albedo / M_PI;
                 
                 // Specular
-                vec3<float> specular = monteCarloGGX(H, hitInfo.normal, wo, wi, F0, roughness);
+                vec3<float> specular = monteCarloGGX(ne, wo, wi, F0, roughness);
                 
                 // Energy ratios
                 vec3<float> kS = F;
                 vec3<float> kD = vec3<float>(1.0f) - kS;
 
                 // BRDF
-                vec3<float> fr = (kD * fLambert + kS * specular) * ambientOcclusion;
+                vec3<float> fr = (kD * diffuse) * ambientOcclusion + kS * specular;
 
                 // Monte Carlo
                 sum = sum + fr * Li;

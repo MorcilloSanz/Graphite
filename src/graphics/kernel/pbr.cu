@@ -75,10 +75,33 @@ __device__ float G1(vec3<float> V, float roughness) {
     return 1 / (1 + lambda);
 }
 
-__device__ vec3<float> monteCarloGGX(vec3<float> H, vec3<float> normal, vec3<float> wo, vec3<float> wi, vec3<float> F0, float roughness) {
+__device__ vec3<float> sampleGGXVNDF(vec3<float> wo, float roughness, float U1, float U2) {
 
+    vec3<float> vh = (vec3<float>(roughness, roughness, 1.f) * wo).normalize();
+    float lensq = vh.x * vh.x + vh.y * vh.y;
+    float invSqrt = 1.f / sqrt(lensq);
+
+    vec3<float> T1 = lensq > 0 ? vec3<float>(-vh.y, vh.x, 0) * invSqrt : vec3<float>(1.f, 0.f, 0.f);
+    vec3<float> T2 = vh.cross(T1);
+
+    float r = sqrt(U1);
+    float phi = 2.0 * M_PI * U2;
+    float t1 = r * cos(phi);
+    float t2 = r * sin(phi);
+    float s = 0.5 * (1.0 + vh.z);
+
+    t2 = (1.f - s) * sqrt(1.f - t1 * t1) + s * t2;
+
+    vec3<float> nh = T1 * t1 + T2 * t2 + vh * sqrt(max(0.0, 1.0 - t1 * t1 - t2 * t2));
+    vec3<float> ne = vec3<float>(roughness, roughness, 1.f) * vec3<float>(nh.x, nh.y, max(0.f, nh.z));
+
+    return ne.normalize();
+}
+
+__device__ vec3<float> monteCarloGGX(vec3<float> normal, vec3<float> wo, vec3<float> wi, vec3<float> F0, float roughness) {
+
+    vec3<float> F = fresnelSchlick(max(wo.dot(wi), 0.0), F0);
     float G2 = geometrySmith(normal, wo, wi, roughness);
-    vec3<float> F = fresnelSchlick(max(wi.dot(wo), 0.0), F0);
 
     return F * G2 / G1(wo, roughness);
 }

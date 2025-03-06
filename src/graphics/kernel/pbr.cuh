@@ -88,6 +88,20 @@ __device__ vec3<float> fresnelSchlick(float cosTheta, vec3<float> F0);
 __device__ vec3<float> specularCookTorrance(vec3<float> H, vec3<float> normal, vec3<float> wo, vec3<float> wi, vec3<float> F, float roughness);
 
 /**
+ * @brief Sampling hemisphere normals using a GGX Distribution .
+ * 
+ * Take a look at:
+ * https://jcgt.org/published/0007/04/01/paper.pdf
+ * 
+ * @param wo 
+ * @param roughness 
+ * @param U1 
+ * @param U2 
+ * @return vec3<float> 
+ */
+__device__ vec3<float> sampleGGXVNDF(vec3<float> wo, float roughness, float U1, float U2);
+
+/**
  * @brief Monte Carlo GGX BRDF estimator. IMPORTANT: monteCarloGGX = (BRDF * wi.dot(normal)) / PDF
  * 
  * Take a look at:
@@ -99,8 +113,8 @@ __device__ vec3<float> specularCookTorrance(vec3<float> H, vec3<float> normal, v
  * @param wi 
  * @param F 
  * @param roughness 
- * @return __device__ 
+ * @return vec3<float> 
  */
-__device__ vec3<float> monteCarloGGX(vec3<float> H, vec3<float> normal, vec3<float> wo, vec3<float> wi, vec3<float> F0, float roughness);
+__device__ vec3<float> monteCarloGGX(vec3<float> normal, vec3<float> wo, vec3<float> wi, vec3<float> F0, float roughness);
 
 }
