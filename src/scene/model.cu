@@ -70,6 +70,8 @@ void extractMeshData(const tinygltf::Model& gltfModel, Model::Ptr model) {
                 materialIndex = material.pbrMetallicRoughness.baseColorTexture.index;
             }
 
+            materialIndex = (matIndex >= 0 && matIndex < gltfModel.materials.size()) ? matIndex : 0;
+
             // Función para extraer atributos correctamente respetando el byteStride
             auto extractAttribute = [&](const std::string& name, std::vector<float>& buffer) {
 
