@@ -158,6 +158,19 @@ __device__ vec3<float> tex(cudaTextureObject_t texObj, float u, float v) {
 }
 
 /**
+ * @brief Returns the value of a texture for a given UVs.
+ * 
+ * @param texObj cudaTextureObject_t of the texture.
+ * @param u the u coordinate.
+ * @param v the v coordinate.
+ * @return vec4<float> 
+ */
+__device__ vec4<float> tex4(cudaTextureObject_t texObj, float u, float v) {
+    float4 texValue = tex2D<float4>(texObj, u, v);
+    return vec4<float>(texValue.x, texValue.y, texValue.z, texValue.w);
+}
+
+/**
  * @brief Sets the pixel color of a pixel in the FrameBuffer.
  * 
  * @param frameBuffer the FrameBuffer that contains the final image.
@@ -233,12 +246,15 @@ __device__ vec3<float> castRay(KernelFragmentParams params, Ray<float> ray, int 
 
             hitInfo.normal = n; // Consider interpolated normal instead of the actual normal of the triangle
 
+            float alpha = 1.0f;
             vec3<float> albedo, metallicRoughness, normal, ambientOcclusion, emission;
+
             if(params.materialsCount > 0) {
 
                 if(params.materials[materialIndex].albedo.hasTexture) {
-                    albedo = tex(params.materials[materialIndex].albedo.texture, uvs.u, uvs.v);
-                    albedo = { pow(albedo.r, GAMMA), pow(albedo.g, GAMMA), pow(albedo.b, GAMMA) };  // Convert from sRGB to lineal
+                    vec4<float> albedo4 = tex4(params.materials[materialIndex].albedo.texture, uvs.u, uvs.v);
+                    albedo = { pow(albedo4.r, GAMMA), pow(albedo4.g, GAMMA), pow(albedo4.b, GAMMA) };  // Convert from sRGB to lineal
+                    alpha = albedo4.w;
                 }
                     
                 if(params.materials[materialIndex].metallicRoughness.hasTexture)
@@ -283,13 +299,13 @@ __device__ vec3<float> castRay(KernelFragmentParams params, Ray<float> ray, int 
                 vec3<float> Li(0.0);
 
                 const float epsilon = 1e-4;
-                Ray<float> newRay(hitInfo.intersection + hitInfo.normal * epsilon, wi); // Desplazar un poco el origen para que no intersecte con si mismo
+                Ray<float> rayBRDF(hitInfo.intersection + hitInfo.normal * epsilon, wi); // Desplazar un poco el origen para que no intersecte con si mismo
 
                 if(bounces > 0) {
-                    Li = castRay(params, newRay, samples, bounces - 1, randState);
+                    Li = castRay(params, rayBRDF, samples, bounces - 1, randState);
                 }else {
                     if(params.sky.hasTexture)
-                        Li = missFunction(params, newRay);
+                        Li = missFunction(params, rayBRDF);
                 }
 
                 // Fresnel
@@ -311,9 +327,24 @@ __device__ vec3<float> castRay(KernelFragmentParams params, Ray<float> ray, int 
 
                 // BRDF
                 vec3<float> fr = (kD * diffuse) * ambientOcclusion + kS * specular;
+                vec3<float> reflected = fr * Li;
+
+                // BTDF
+                vec3<float> refractedWi = ray.direction.normalize(); // Compute the direction with Snell law (refract function)
+                Ray<float> rayBTDF(hitInfo.intersection + refractedWi * epsilon, refractedWi);
+
+                vec3<float> refracted(0.0f);
+                if(alpha < 1.f) {
+                    //refracted = castRay(params, rayBTDF, samples, bounces - 1, randState);
+                    refracted = vec3<float>(0.f, 0.f, 1.f);
+                }
+
+                // BSDF
+                vec3<float> light = reflected;
+                light = lerp(reflected, refracted, 1 - alpha);
 
                 // Monte Carlo
-                sum = sum + fr * Li;
+                sum = sum + light;
             }
 
             // Rendering equation
