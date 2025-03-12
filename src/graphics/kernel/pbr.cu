@@ -15,6 +15,17 @@ __device__ vec3<float> reflect(vec3<float> wo, vec3<float> normal) {
     return wi.normalize();
 }
 
+__device__ vec3<float> refract(vec3<float> wo, vec3<float> normal, float eta) {
+
+    float dotNI = normal.dot(wo);
+    float k = 1.f - eta * eta * (1.f - dotNI * dotNI);
+    
+    if(k < 0.f)
+        return vec3<float>(0.f);
+
+    return wo * eta - normal * (eta * dotNI + sqrt(k));
+}
+
 __device__ float distributionGGX(vec3<float> N, vec3<float> H, float roughness) {
 
     float a = roughness * roughness;

@@ -36,6 +36,22 @@ __device__ float clamp(float value, float minVal, float maxVal);
 __device__ vec3<float> reflect(vec3<float> wo, vec3<float> normal);
 
 /**
+ * @brief Computes the refraction direction using Snell's law.
+ *
+ * This function calculates the refracted direction given an incident direction, 
+ * a surface normal, and the relative index of refraction (eta).
+ *
+ * @param wo The incident direction vector (normalized).
+ * @param normal The surface normal vector (normalized).
+ * @param eta The ratio of the indices of refraction (η = IOR_in / IOR_out).
+ * @return The refracted direction vector. If total internal reflection occurs, returns a zero vector.
+ *
+ * @note Ensure that `wo` and `normal` are normalized before calling this function.
+ * @note The function assumes that `wo` points away from the surface.
+ */
+__device__ vec3<float> refract(vec3<float> wo, vec3<float> normal, float eta);
+
+/**
  * @brief Distribution GGX.
  * 
  * @param N the normal vector.

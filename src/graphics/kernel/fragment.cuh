@@ -293,7 +293,7 @@ __device__ vec3<float> castRay(KernelFragmentParams params, Ray<float> ray, int 
 
                 vec3<float> ne = sampleGGXVNDF(wo, roughness, U1, U2);
                 ne = lerp<float>(hitInfo.normal, ne, roughness);
-                vec3<float> wi = reflect(wo, ne) * -1;
+                vec3<float> wi = reflect(wo * -1, ne);
 
                 // Rendering equation
                 vec3<float> Li(0.0);
@@ -330,7 +330,11 @@ __device__ vec3<float> castRay(KernelFragmentParams params, Ray<float> ray, int 
                 vec3<float> reflected = fr * Li;
 
                 // BTDF
-                vec3<float> refractedWi = ray.direction.normalize(); // Compute the direction with Snell law (refract function)
+                float airIOR = 1.0f;
+                float glassIOR = 1.5f;
+                float eta = airIOR / glassIOR;
+
+                vec3<float> refractedWi = refract(wo * -1, ne, eta);
                 Ray<float> rayBTDF(hitInfo.intersection + refractedWi * epsilon, refractedWi);
 
                 vec3<float> refracted(0.0f);
