@@ -33,7 +33,7 @@ __device__ float clamp(float value, float minVal, float maxVal);
  * @param normal The surface normal vector to reflect the incident vector against.
  * @return vec3<float>
  */
-__device__ vec3<float> reflect(vec3<float> wo, vec3<float> normal);
+__device__ vec3<float> reflect(const vec3<float>& wo, const vec3<float>& normal);
 
 /**
  * @brief Computes the refraction direction using Snell's law.
@@ -49,7 +49,7 @@ __device__ vec3<float> reflect(vec3<float> wo, vec3<float> normal);
  * @note Ensure that `wo` and `normal` are normalized before calling this function.
  * @note The function assumes that `wo` points away from the surface.
  */
-__device__ vec3<float> refract(vec3<float> wo, vec3<float> normal, float eta);
+__device__ vec3<float> refract(const vec3<float>& wo, const vec3<float>& normal, float eta);
 
 /**
  * @brief Distribution GGX.
@@ -59,27 +59,7 @@ __device__ vec3<float> refract(vec3<float> wo, vec3<float> normal, float eta);
  * @param roughness the roughness of the material.
  * @return float 
  */
-__device__ float distributionGGX(vec3<float> N, vec3<float> H, float roughness);
-
-/**
- * @brief Geometry SchlickGGX.
- * 
- * @param NdotV the dot product between the normal and the outgoing direction.
- * @param roughness the roughness of the material.
- * @return float 
- */
-__device__ float geometrySchlickGGX(float NdotV, float roughness);
-
-/**
- * @brief Geometry Smith function.
- * 
- * @param N the normal vector.
- * @param V the outgoing direction.
- * @param L the incoming direction.
- * @param roughness the roughness of the material.
- * @return float 
- */
-__device__ float geometrySmith(vec3<float> N, vec3<float> V, vec3<float> L, float roughness);
+__device__ float distributionGGX(const vec3<float>& N, const vec3<float>& H, float roughness);
 
 /**
  * @brief Fresnel Schlick approximation.
@@ -88,20 +68,7 @@ __device__ float geometrySmith(vec3<float> N, vec3<float> V, vec3<float> L, floa
  * @param F0 F0.
  * @return vec3<float> 
  */
-__device__ vec3<float> fresnelSchlick(float cosTheta, vec3<float> F0);
-
-/**
- * @brief Cook-Torrance BRDF.
- * 
- * @param H the halfway vector.
- * @param normal the normal vector.
- * @param wo the outgoing direction.
- * @param wi the incoming direction.
- * @param F Fresnel.
- * @param roughness the roughness of the material.
- * @return __device__ 
- */
-__device__ vec3<float> specularCookTorrance(vec3<float> H, vec3<float> normal, vec3<float> wo, vec3<float> wi, vec3<float> F, float roughness);
+__device__ vec3<float> fresnelSchlick(float cosTheta, const vec3<float>& F0);
 
 /**
  * @brief Sampling hemisphere normals using a GGX Distribution .
@@ -115,7 +82,12 @@ __device__ vec3<float> specularCookTorrance(vec3<float> H, vec3<float> normal, v
  * @param U2 
  * @return vec3<float> 
  */
-__device__ vec3<float> sampleGGXVNDF(vec3<float> wo, float roughness, float U1, float U2);
+__device__ vec3<float> sampleGGXVNDF(
+    const vec3<float>& wo, 
+    float roughness, 
+    float U1, 
+    float U2
+);
 
 /**
  * @brief Monte Carlo GGX BRDF estimator. IMPORTANT: monteCarloGGX = (BRDF * wi.dot(normal)) / PDF
@@ -131,6 +103,12 @@ __device__ vec3<float> sampleGGXVNDF(vec3<float> wo, float roughness, float U1, 
  * @param roughness 
  * @return vec3<float> 
  */
-__device__ vec3<float> monteCarloGGX(vec3<float> normal, vec3<float> wo, vec3<float> wi, vec3<float> F0, float roughness);
+__device__ vec3<float> monteCarloGGX(
+    const vec3<float>& normal, 
+    const vec3<float>& wo, 
+    const vec3<float>& wi, 
+    const vec3<float>& F0, 
+    float roughness
+);
 
 }

@@ -13,12 +13,13 @@
 
 #define SEED 1234
 #define GAMMA 2.2
+#define EPS 1e-5
 
 namespace gph 
 {
 
 template <typename T>
-__device__ vec3<T> lerp(vec3<T> u, vec3<T> v, T t) {
+__device__ vec3<T> lerp(const vec3<T>& u, const vec3<T>& v, T t) {
     return u + (v - u) * t;
 }
 
@@ -32,7 +33,7 @@ __device__ vec3<T> lerp(vec3<T> u, vec3<T> v, T t) {
  * @return vec3<float>
  */
 template <typename T>
-__device__ vec3<T> getBarycentricInterpolation3(KernelFragmentParams params, int i, vec3<T> barycentricCoords, int attribute) {
+__device__ vec3<T> getBarycentricInterpolation3(const KernelFragmentParams& params, int i, const vec3<T>& barycentricCoords, int attribute) {
 
     vec3<T> A1 = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, attribute);     // v1x v2x v3x
     vec3<T> A2 = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, attribute + 1); // v1y v2y v3y
@@ -55,7 +56,7 @@ __device__ vec3<T> getBarycentricInterpolation3(KernelFragmentParams params, int
  * @return vec2<float>
  */
 template <typename T>
-__device__ vec2<T> getBarycentricInterpolation2(KernelFragmentParams params, int i, vec3<T> barycentricCoords, int attribute) {
+__device__ vec2<T> getBarycentricInterpolation2(const KernelFragmentParams& params, int i, const vec3<T>& barycentricCoords, int attribute) {
 
     vec3<T> A1 = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, attribute);     // uv1x uv2x uv3x
     vec3<T> A2 = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, attribute + 1); // uv1y uv2y uv3y
@@ -75,7 +76,7 @@ __device__ vec2<T> getBarycentricInterpolation2(KernelFragmentParams params, int
  * @param barycentricCoords the barycentric coordinates of the triangle.
  * @return vec3<float> 
  */
-__device__ vec3<float> getBarycentricColor(KernelFragmentParams params, int i, vec3<float> barycentricCoords) {
+__device__ vec3<float> getBarycentricColor(const KernelFragmentParams& params, int i, const vec3<float>& barycentricCoords) {
     return getBarycentricInterpolation3<float>(params, i, barycentricCoords, ATTRIBUTE_R);
 }
 
@@ -87,7 +88,7 @@ __device__ vec3<float> getBarycentricColor(KernelFragmentParams params, int i, v
  * @param barycentricCoords the barycentric coordinates of the triangle.
  * @return vec3<float> 
  */
-__device__ vec3<float> getBarycentricNormal(KernelFragmentParams params, int i, vec3<float> barycentricCoords) {
+__device__ vec3<float> getBarycentricNormal(const KernelFragmentParams& params, int i, const vec3<float>& barycentricCoords) {
     return getBarycentricInterpolation3<float>(params, i, barycentricCoords, ATTRIBUTE_NX).normalize();
 }
 
@@ -99,7 +100,7 @@ __device__ vec3<float> getBarycentricNormal(KernelFragmentParams params, int i, 
  * @param barycentricCoords the barycentric coordinates of the triangle.
  * @return vec2<float> 
  */
-__device__ vec2<float> getBarycentricUVs(KernelFragmentParams params, int i, vec3<float> barycentricCoords) {
+__device__ vec2<float> getBarycentricUVs(const KernelFragmentParams& params, int i, const vec3<float>& barycentricCoords) {
     return getBarycentricInterpolation2<float>(params, i, barycentricCoords, ATTRIBUTE_UVX);
 }
 
@@ -111,7 +112,7 @@ __device__ vec2<float> getBarycentricUVs(KernelFragmentParams params, int i, vec
  * @param barycentricCoords the barycentric coordinates of the triangle.
  * @return vec3<float> 
  */
-__device__ vec3<float> getBarycentricTangent(KernelFragmentParams params, int i, vec3<float> barycentricCoords) {
+__device__ vec3<float> getBarycentricTangent(const KernelFragmentParams& params, int i, const vec3<float>& barycentricCoords) {
     return getBarycentricInterpolation3<float>(params, i, barycentricCoords, ATTRIBUTE_TANX).normalize();
 }
 
@@ -123,7 +124,7 @@ __device__ vec3<float> getBarycentricTangent(KernelFragmentParams params, int i,
  * @param barycentricCoords the barycentric coordinates of the triangle.
  * @return vec3<float> 
  */
-__device__ vec3<float> getBarycentricBitangent(KernelFragmentParams params, int i, vec3<float> barycentricCoords) {
+__device__ vec3<float> getBarycentricBitangent(const KernelFragmentParams& params, int i, const vec3<float>& barycentricCoords) {
     return getBarycentricInterpolation3<float>(params, i, barycentricCoords, ATTRIBUTE_BITANX).normalize();
 }
 
@@ -133,7 +134,7 @@ __device__ vec3<float> getBarycentricBitangent(KernelFragmentParams params, int 
  * @param ray the ray.
  * @return vec2<float>
  */
-__device__ vec2<float> getSkyUVs(Ray<float> ray) {
+__device__ vec2<float> getSkyUVs(const Ray<float>& ray) {
 
     float theta = acosf(fmaxf(-1.0f, fminf(ray.direction.y, 1.0f)));
     float phi = atan2f(ray.direction.z, ray.direction.x);
@@ -186,12 +187,25 @@ __device__ void setPixel(uint8_t* frameBuffer, int x, int y, int width, const ve
     frameBuffer[3 * (x + y * width) + 2] = color.b;
 }
 
-__device__ vec3<float> missFunction(KernelFragmentParams params, Ray<float> ray) {
+__device__ vec3<float> missFunction(const KernelFragmentParams& params, const Ray<float>& ray) {
 
     vec2<float> uvs = getSkyUVs(ray);
     vec3<float> sky = tex(params.sky.texture, uvs.u, uvs.v);
 
     return sky;
+}
+
+__device__ Triangle<float> getTriangle(const KernelFragmentParams& params, int i) {
+
+    vec3<float> X = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, ATTRIBUTE_X); // v1x v2x v3x
+    vec3<float> Y = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, ATTRIBUTE_Y); // v1y v2y v3y
+    vec3<float> Z = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, ATTRIBUTE_Z); // v1z v2z v3z
+
+    vec3<float> v1 = { X.x, Y.x, Z.x };
+    vec3<float> v2 = { X.y, Y.y, Z.y };
+    vec3<float> v3 = { X.z, Y.z, Z.z };
+
+    return Triangle<float>(v1, v2, v3);
 }
 
 /**
@@ -202,7 +216,7 @@ __device__ vec3<float> missFunction(KernelFragmentParams params, Ray<float> ray)
  * @param y the y coordinate.
  * @return void 
  */
-__device__ vec3<float> castRay(KernelFragmentParams params, Ray<float> ray, int samples, int bounces, curandState randState) {
+__device__ vec3<float> castRay(const KernelFragmentParams& params, Ray<float>& ray, int samples, int bounces, curandState randState) {
 
     vec3<float> Lo;
     float distance = INFINITY;
@@ -214,15 +228,7 @@ __device__ vec3<float> castRay(KernelFragmentParams params, Ray<float> ray, int 
 
         unsigned int materialIndex = static_cast<unsigned int>(getAttribute(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, ATTRIBUTE_MATERIAL_INDEX));
 
-        vec3<float> X = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, ATTRIBUTE_X); // v1x v2x v3x
-        vec3<float> Y = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, ATTRIBUTE_Y); // v1y v2y v3y
-        vec3<float> Z = getAttributes3(params.vertexBuffer.buffer, params.indexBuffer.buffer, i, ATTRIBUTE_Z); // v1z v2z v3z
-
-        vec3<float> v1 = { X.x, Y.x, Z.x };
-        vec3<float> v2 = { X.y, Y.y, Z.y };
-        vec3<float> v3 = { X.z, Y.z, Z.z };
-
-        Triangle<float> triangle (v1, v2, v3);
+        Triangle<float> triangle  = getTriangle(params, i);
         Ray<float>::HitInfo hitInfo = ray.intersects(triangle);
 
         if(hitInfo.hit && hitInfo.distance < distance) {
@@ -274,8 +280,6 @@ __device__ vec3<float> castRay(KernelFragmentParams params, Ray<float> ray, int 
                     emission = tex(params.materials[materialIndex].emission.texture, uvs.u, uvs.v);
                     emission = { pow(emission.r, GAMMA), pow(emission.g, GAMMA), pow(emission.b, GAMMA) }; // Convert from sRGB to lineal
                 }
-
-                c = emission + c * albedo;
             }
 
             vec3<float> Le = emission;
@@ -298,8 +302,7 @@ __device__ vec3<float> castRay(KernelFragmentParams params, Ray<float> ray, int 
                 // Rendering equation
                 vec3<float> Li(0.0);
 
-                const float epsilon = 1e-4;
-                Ray<float> rayBRDF(hitInfo.intersection + hitInfo.normal * epsilon, wi); // Desplazar un poco el origen para que no intersecte con si mismo
+                Ray<float> rayBRDF(hitInfo.intersection + hitInfo.normal * EPS, wi); // Desplazar un poco el origen para que no intersecte con si mismo
 
                 if(bounces > 0) {
                     Li = castRay(params, rayBRDF, samples, bounces - 1, randState);
@@ -334,13 +337,17 @@ __device__ vec3<float> castRay(KernelFragmentParams params, Ray<float> ray, int 
                 float glassIOR = 1.5f;
                 float eta = airIOR / glassIOR;
 
-                vec3<float> refractedWi = refract(wo * -1, ne, eta);
-                Ray<float> rayBTDF(hitInfo.intersection + refractedWi * epsilon, refractedWi);
-
                 vec3<float> refracted(0.0f);
-                if(alpha < 1.f) {
-                    //refracted = castRay(params, rayBTDF, samples, bounces - 1, randState);
-                    refracted = vec3<float>(0.f, 0.f, 1.f);
+                vec3<float> refractedWi = refract(wo * -1, ne, eta).normalize();
+
+                if(refractedWi.module() > 0.f) {
+
+                    Ray<float> rayBTDF(hitInfo.intersection + ne * EPS, refractedWi * -1);
+
+                    if(alpha < 1.f) {
+                        //refracted = castRay(params, rayBTDF, samples, bounces - 1, randState);
+                        refracted = vec3<float>(0.f, 0.f, 1.f);
+                    }
                 }
 
                 // BSDF
@@ -368,7 +375,7 @@ __device__ vec3<float> castRay(KernelFragmentParams params, Ray<float> ray, int 
 /**
  * @brief the CUDA kernel that executes the program for each pixel of the FrameBuffer image.
  * 
- * @param params KernelFragmentParams struct.
+ * @param params KernelFragmentParams struct. DO NOT PASS BY REFERENCE HERE (it comes from HOST)
  * @return void 
  */
 __global__ void kernel_fragment(KernelFragmentParams params) {
