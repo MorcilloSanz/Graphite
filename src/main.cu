@@ -37,7 +37,7 @@ int main() {
     int skyWidth, skyHeight, skyChannels;
 
     stbi_set_flip_vertically_on_load(1);
-    float* skyData = stbi_loadf("C:/Users/amorc/Documents/Dev/3D/360images/brown_photostudio_01_8k.hdr", &skyWidth, &skyHeight, &skyChannels, STBI_rgb_alpha);
+    float* skyData = stbi_loadf("C:/Users/amorc/Documents/Dev/3D/360images/aerodynamics_workshop_2k.hdr", &skyWidth, &skyHeight, &skyChannels, STBI_rgb_alpha);
 
     TextureHDR::Ptr sky = TextureHDR::New(skyData, skyWidth, skyHeight);
     renderer.setSky(sky);
