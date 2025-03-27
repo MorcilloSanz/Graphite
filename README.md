@@ -25,4 +25,12 @@ $$\int_{\Omega} f_{r}\left (  p, w_{i}, w_{o} \right ) L_{i} \left (  p, w_{i} \
 
 ![](img/output.png)
 
+[Dagamed helmet](https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/DamagedHelmet)
+
 ![](img/output2.png)
+
+[Stone lion by DailyArt](https://sketchfab.com/3d-models/stone-lion-bf38a87d03834065a5f25c29a1cd7273)
+
+![](img/output3.png)
+
+[Cyborg girl by David Glynch](https://sketchfab.com/3d-models/cyborg-girl-36898a2372994b6ea82d073d33bbc346)
